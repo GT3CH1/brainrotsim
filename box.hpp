@@ -28,6 +28,7 @@ public:
 
     SDL_Texture *renderTexture;
 
+    int num_audio_frames = 0;
 
     Box(b2World *world, SDL_Renderer *renderer) {
         auto x = (float) (arc4random() % (int) Config::SCREEN_CENTER_X * 2 + 1);
@@ -65,7 +66,7 @@ public:
         int x_sign = arc4random() % 2 == 0 ? 1 : -1;
         int y_sign = arc4random() % 2 == 0 ? 1 : -1;
 
-        body->ApplyForce(b2Vec2(x_sign * 1000 * body->GetMass(), y_sign * 1000 * body->GetMass()),
+        body->ApplyForce(b2Vec2(x_sign * 10000 * body->GetMass(), y_sign * 10000 * body->GetMass()),
                          body->GetWorldCenter(),
                          true);
         body->SetTransform(body->GetPosition(), 0);
@@ -78,7 +79,7 @@ public:
 
     }
 
-    void update(SDL_Renderer *renderer) const {
+    void update(SDL_Renderer *renderer) {
         uint32 r = color.red();
         uint32 g = color.green();
         uint32 b = color.blue();
@@ -97,6 +98,8 @@ public:
         SDL_SetRenderTarget(renderer, nullptr);
         SDL_RenderCopyExF(renderer, renderTexture, nullptr, rect, body->GetAngle() * 180 / M_PI, nullptr,
                           SDL_FLIP_NONE);
+        num_audio_frames--;
+
     }
 
     static void onCollision(std::vector<BoxInfo *> *pending_boxes) {

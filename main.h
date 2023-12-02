@@ -9,6 +9,7 @@
 #include "box.hpp"
 #include "consts.h"
 #include "Keyboard.hpp"
+#include "beeper.h"
 #include <SDL2/SDL.h>
 #include <vector>
 
@@ -33,8 +34,9 @@ public:
     static SDL_Rect bg;
     
     static int sound_idx;
-
+    static int devId;
     static void setScreenDimensions(bool fullscreen = false);
+    static Beeper beeper;
 };
 
 #endif //PHYSICSSIM_MAIN_H

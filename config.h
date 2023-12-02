@@ -34,5 +34,6 @@ int Config::SCREEN_WIDTH = 64;
 int Config::SCREEN_HEIGHT = 48;
 int Config::SCREEN_CENTER_X = Config::SCREEN_WIDTH / 2;
 int Config::SCREEN_CENTER_Y = Config::SCREEN_HEIGHT / 2;
-int Config::MAX_BOXES = 20;
+int Config::MAX_BOXES = 60;
+
 #endif //PHYSICSSIM_CONFIG_H

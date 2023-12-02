@@ -17,5 +17,7 @@ add_executable(physicssim main.cpp box.hpp
         main.h
         config.h
         Color.h
-        audio.h)
+        audio.h
+        beeper.cpp
+        beeper.h)
 target_link_libraries(physicssim SDL2 SDL2_image box2d)

@@ -3,12 +3,10 @@
 #include <box2d/box2d.h>
 #include <vector>
 #include "box.hpp"
-#include "consts.h"
 #include "Keyboard.hpp"
 
 #include "main.h"
 #include "config.h"
-#include "audio.h"
 
 class ContactListener : public b2ContactListener {
     void BeginContact(b2Contact *contact) override {
@@ -26,6 +24,13 @@ class ContactListener : public b2ContactListener {
             }
             auto shape = (b2PolygonShape *) boxA->body->GetFixtureList()->GetShape();
             shape->SetAsBox(boxA->rect->w / 2.0f, boxA->rect->h / 2.0f);
+            if (boxA->num_audio_frames <= 0) {
+                boxA->num_audio_frames = 10;
+                auto tone = 1760 / boxA->rect->w;
+                if (tone < 27.50)
+                    tone = 27.50;
+                Main::beeper.setWaveTone(tone);
+            }
         }
         if (boxB) {
             Box::onCollision(Main::pending_boxes);
@@ -36,12 +41,16 @@ class ContactListener : public b2ContactListener {
             if (Config::color_change_on_bounce) {
                 boxB->color = Color::randColor();
             }
-            if (SDL_OpenAudio(&spec, nullptr) < 0) {
-                printf("Failed to open Audio Device: %s\n", SDL_GetError());
-            }
-            SDL_PauseAudio(0);
             auto shape = (b2PolygonShape *) boxB->body->GetFixtureList()->GetShape();
             shape->SetAsBox(boxB->rect->w / 2.0f, boxB->rect->h / 2.0f);
+            if (boxB->num_audio_frames <= 0) {
+                boxB->num_audio_frames = 10;
+                auto tone = 1760 / boxB->rect->w;
+                if (tone < 27.50)
+                    tone = 27.50;
+                Main::beeper.setWaveTone(tone);
+                Main::beeper.setSoundOn(true);
+            }
         }
     }
 
@@ -58,6 +67,7 @@ class ContactListener : public b2ContactListener {
 
 
 int main() {
+
     Main::setup();
     Main::run();
 }
@@ -65,7 +75,7 @@ int main() {
 b2World *Main::world;
 SDL_Renderer *Main::renderer;
 SDL_Window *Main::window;
-
+Beeper Main::beeper;
 Wall *Main::bottom;
 Wall *Main::top;
 Wall *Main::left;
@@ -76,7 +86,7 @@ SDL_Rect Main::bg;
 
 void Main::setup() {
 
-    srandom(random() ^ time(nullptr));
+    srandom(time(nullptr));
     Keyboard::Keyboard_Init();
     window = SDL_CreateWindow("Brain Rot Sim", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
                               SDL_WINDOW_SHOWN);
@@ -110,7 +120,10 @@ void Main::setup() {
 
     setScreenDimensions(false);
 
-
+    Main::beeper.initializeAudio();
+    Main::beeper.setWaveTone(440);
+    Main::beeper.setSoundOn(false);
+    Main::beeper.setWaveType(0);
 }
 
 void Main::setScreenDimensions(bool fullscreen) {
@@ -142,15 +155,21 @@ void Main::setScreenDimensions(bool fullscreen) {
     if (right != nullptr)
         world->DestroyBody(right->body);
 
+    delete bottom;
+    delete top;
+    delete left;
+    delete right;
+
     bottom = new Wall(0, max_y - 1.0f, max_x, 1.0f, world);
     top = new Wall(0, -1, max_x, 1.0f, world);
     left = new Wall(-1, 0, 1, max_y, world);
     right = new Wall(max_x, 0, 1, max_y, world);
 }
 
-
 void Main::run() {
+
     while (Config::runner) {
+
         if (boxes.size() < Config::MAX_BOXES) {
             for (auto box: *pending_boxes) {
                 auto new_boc = new Box(world, renderer, box->x, box->y, box->w, box->h, box->color);
@@ -161,18 +180,6 @@ void Main::run() {
             }
             pending_boxes->clear();
         }
-
-        oscillator a4 = oscillate(A4_OSC, 0.8f);
-        A4_oscillator = &a4;
-
-        SDL_AudioSpec spec = {
-                .format = AUDIO_F32,
-                .channels = 1,
-                .freq = SAMPLE_RATE,
-                .samples = 4096,
-                .callback = oscillator_callback,
-        };
-
 
 
         SDL_Event e;
@@ -235,7 +242,7 @@ void Main::run() {
 //            SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderFillRect(renderer, &bg);
-
+        auto box_has_audio = false;
         for (auto it = boxes.begin(); it != boxes.end(); ++it) {
             Box *box = *it;
             // draw line from center of box to middle of screen
@@ -245,6 +252,11 @@ void Main::run() {
                 SDL_RenderDrawLineF(renderer, center.x, center.y, Config::SCREEN_CENTER_X, Config::SCREEN_CENTER_Y);
             }
             box->update(renderer);
+            if (box->num_audio_frames > 0)
+                box_has_audio = true;
+        }
+        if (!box_has_audio) {
+            Main::beeper.setSoundOn(false);
         }
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 

@@ -17,8 +17,6 @@ typedef struct {
 const int SAMPLE_RATE = 44100;
 const int BUFFER_SIZE = 4096;
 
-const float A4_OSC = (float) SAMPLE_RATE / 440.00f;
-
 oscillator oscillate(float rate, float volume) {
     oscillator o = {
             .current_step = 0,
@@ -37,9 +35,10 @@ float next(oscillator *os) {
 oscillator *A4_oscillator;
 
 void oscillator_callback(void *userdata, Uint8 *stream, int len) {
-    float *fstream = (float *) stream;
+    auto *fstream = (float *) stream;
+    auto osc = (oscillator *) userdata;
     for (int i = 0; i < BUFFER_SIZE; i++) {
-        float v = next(A4_oscillator);
+        float v = next(osc);
         fstream[i] = v;
     }
 }
