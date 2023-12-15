@@ -8,16 +8,19 @@
 #include <SDL2/SDL_rect.h>
 #include <box2d/box2d.h>
 
-class Wall {
+class Wall
+{
 public:
     SDL_FRect rect;
-    b2Body *body;
-    Wall(float x, float y, float w, float h, b2World *world) {
+    b2Body* body;
+
+    Wall(float x, float y, float w, float h, b2World* world)
+    {
         b2BodyDef groundBodyDef;
-        groundBodyDef.position.Set((float) x, (float) y);
+        groundBodyDef.position.Set(x, y);
         b2PolygonShape groundBox;
         groundBox.SetAsBox(w, h);
-        b2Body *groundBody = world->CreateBody(&groundBodyDef);
+        b2Body* groundBody = world->CreateBody(&groundBodyDef);
         groundBody->CreateFixture(&groundBox, 0.0f);
         body = groundBody;
         rect = SDL_FRect();

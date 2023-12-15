@@ -32,6 +32,11 @@ private:
     //Samples a sine wave at a given index
     float sampleSine(float index);
 
+    // Samples a triangle wave at a given index
+    float sampleTriangle(float index);
+
+    float sampleSawtooth(float index);
+    
     //Samples a square wave at a given index
     float sampleSquare(float index);
 

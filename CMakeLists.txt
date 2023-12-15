@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.26)
 project(physicssim)
 include_directories(src/)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_FLAGS "-O3")
+set(CMAKE_CXX_FLAGS "-g")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
 endif ()
@@ -19,5 +19,6 @@ add_executable(physicssim main.cpp box.hpp
         Color.h
         audio.h
         beeper.cpp
-        beeper.h)
-target_link_libraries(physicssim SDL2 SDL2_image box2d)
+        beeper.h
+        renderer.h)
+target_link_libraries(physicssim SDL2 SDL2_image box2d SDL2_ttf)
