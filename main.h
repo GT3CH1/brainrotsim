@@ -6,11 +6,17 @@
 #define PHYSICSSIM_MAIN_H
 
 #include "Wall.h"
-#include "box.hpp"
+#include "box.h"
 #include "beeper.h"
 #include <SDL2/SDL.h>
 #include <vector>
-#include "renderer.h"
+#include "simrenderer.h"
+#include <iostream>
+#include <SDL2/SDL_ttf.h>
+#include <vector>
+#include "box.h"
+#include "Keyboard.hpp"
+#include "config.h"
 
 class Main
 {
@@ -36,13 +42,17 @@ public:
     static int sound_idx;
     static int devId;
     static void setScreenDimensions(bool fullscreen = false);
+    static void reset_simulation();
     static void handle_keyboard();
     static void handle_key_event();
+    static void draw_outline(SDL_FRect& dummy, const SDL_FRect* rect, const b2Body* body);
+    static void drawLineToBox(const Box* box, uint32 r, uint32 g, uint32 b);
+    static void addNewBoxes();
+    static void render_boxes(bool& box_has_audio);
     static Beeper beeper;
 };
 
 b2World* Main::world = nullptr;
-SDL_Renderer* Main::renderer;
 SDL_Window* Main::window;
 Beeper Main::beeper;
 Wall* Main::bottom = nullptr;
@@ -52,7 +62,7 @@ Wall* Main::right = nullptr;
 std::vector<Box*> Main::boxes;
 std::vector<BoxInfo*>* Main::pending_boxes = new std::vector<BoxInfo*>();
 SDL_Rect Main::bg;
-TTF_Font* Main::font = nullptr;
+// TTF_Font* Main::font = nullptr;
 
 
 class ContactListener final : public b2ContactListener

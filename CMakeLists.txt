@@ -11,7 +11,8 @@ if (MACOSX)
     link_directories(/opt/homebrew/lib)
 endif ()
 include_directories(/usr/local/include)
-add_executable(physicssim main.cpp box.hpp
+add_executable(physicssim main.cpp box.h
+        box.cpp
         Keyboard.hpp
         Wall.h
         main.h
@@ -20,5 +21,7 @@ add_executable(physicssim main.cpp box.hpp
         audio.h
         beeper.cpp
         beeper.h
-        renderer.h)
+        simrenderer.h
+        config.cpp
+        simrenderer.cpp)
 target_link_libraries(physicssim SDL2 SDL2_image box2d SDL2_ttf)

@@ -14,7 +14,7 @@ public:
     SDL_FRect rect;
     b2Body* body;
 
-    Wall(float x, float y, float w, float h, b2World* world)
+    Wall(const float x, const float y, const float w, const float h, b2World* world)
     {
         b2BodyDef groundBodyDef;
         groundBodyDef.position.Set(x, y);
