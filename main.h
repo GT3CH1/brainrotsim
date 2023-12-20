@@ -41,7 +41,7 @@ public:
 
     static int sound_idx;
     static int devId;
-    static void setScreenDimensions(bool fullscreen = false);
+    static void setupWorld();
     static void reset_simulation();
     static void handle_keyboard();
     static void handle_key_event();
@@ -61,7 +61,6 @@ Wall* Main::left = nullptr;
 Wall* Main::right = nullptr;
 std::vector<Box*> Main::boxes;
 std::vector<BoxInfo*>* Main::pending_boxes = new std::vector<BoxInfo*>();
-SDL_Rect Main::bg;
 // TTF_Font* Main::font = nullptr;
 
 
