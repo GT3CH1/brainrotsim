@@ -4,7 +4,7 @@ void Main::setup() {
     srandom(time(nullptr));
     Keyboard::Keyboard_Init();
     Renderer::init();
-    world = new b2World(b2Vec2(0, 9.8));
+    world = new b2World(b2Vec2(0, GRAVITY));
     auto *contactListener = new ContactListener();
     world->SetContactListener(contactListener);
 
@@ -40,11 +40,11 @@ void Main::setupWorld() {
     left = new Wall(-1, 0, 1, world_top, world);
     right = new Wall(world_right, 0, 1, world_top, world);
 
-    Renderer::addLayer(MAIN_LAYER);
+    Renderer::addLayer(BOX_LAYER);
     Renderer::addLayer(OUTLINE_LAYER);
 
     Renderer::addLayer(LINE_LAYER);
-    Renderer::setBlendMode(MAIN_LAYER, SDL_BLENDMODE_ADD);
+    Renderer::setBlendMode(BOX_LAYER, SDL_BLENDMODE_ADD);
     Renderer::setBlendMode(OUTLINE_LAYER, SDL_BLENDMODE_ADD);
     Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
 }
@@ -57,10 +57,10 @@ void Main::reset_simulation() {
 
     pending_boxes->clear();
     Renderer::clearAllLayers();
-    Renderer::setRenderLayer(MAIN_LAYER);
+    Renderer::setRenderLayer(BOX_LAYER);
 }
 
-void Main::handle_keyboard() {
+void Main::handleKeybind() {
     if (Keyboard::keyWasPressed(SDLK_SPACE))
         Config::paused = !Config::paused;
     if (Keyboard::keyWasPressed(SDLK_r)) {
@@ -96,7 +96,7 @@ void Main::handle_keyboard() {
     Keyboard::update();
 }
 
-void Main::handle_key_event() {
+void Main::onKeyPress() {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         switch (e.type) {
@@ -119,11 +119,10 @@ void Main::handle_key_event() {
 }
 
 void Main::draw_outline(const SDL_FRect *rect, const b2Body *body) {
-    constexpr auto offset = 4;
     SDL_FRect dummy;
-    dummy.x = offset / 2.0f + (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE;
-    dummy.y = offset / 2.0f + (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE;
-    dummy.w = -offset + rect->w * Renderer::WINDOW_SCALE;
+    dummy.x = (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE;
+    dummy.y = (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE;
+    dummy.w = rect->w * Renderer::WINDOW_SCALE;
     dummy.h = dummy.w;
     Renderer::drawRect(&dummy, false);
 }
@@ -150,14 +149,11 @@ void Main::addNewBoxes() {
 
 void Main::render_boxes(bool &box_has_audio) {
     SDL_FRect dummy;
-    Renderer::setRenderLayer(MAIN_LAYER);
+    Renderer::setRenderLayer(BOX_LAYER);
     for (const auto box: boxes) {
-        const uint32 r = box->color.red();
-        const uint32 g = box->color.green();
-        const uint32 b = box->color.blue();
         const auto rect = box->rect;
         const auto body = box->body;
-        Renderer::setDrawColor(r, g, b);
+        Renderer::setDrawColor(box->color);
         dummy.x = (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE;
         dummy.y = (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE;
         dummy.w = rect->w * Renderer::WINDOW_SCALE;
@@ -181,23 +177,24 @@ void Main::render_boxes(bool &box_has_audio) {
             const auto body = box->body;
             draw_outline(rect, body);
         }
-        Renderer::setRenderLayer(MAIN_LAYER);
+        Renderer::setRenderLayer(BOX_LAYER);
     }
     if (Config::line_mode) {
-        Renderer::setRenderLayer(LINE_LAYER);
         Renderer::setDrawColor(BLACK);
+        Renderer::setRenderLayer(LINE_LAYER);
         Renderer::clearRenderer();
+        // Renderer::clearLayer(LINE_LAYER);
         for (const auto box: boxes)
             drawLineToBox(box);
-        Renderer::setRenderLayer(MAIN_LAYER);
+        Renderer::setRenderLayer(BOX_LAYER);
     }
 }
 
 void Main::run() {
-    Renderer::setRenderLayer(MAIN_LAYER);
+    Renderer::setRenderLayer(BOX_LAYER);
     while (Config::runner) {
-        handle_key_event();
-        handle_keyboard();
+        onKeyPress();
+        handleKeybind();
         if (Config::paused) {
             beeper.setSoundOn(false);
             continue;
@@ -221,6 +218,6 @@ void Main::run() {
         Renderer::copyAllLayersToRenderer();
         Renderer::present();
         world->Step(WORLD_STEP, NUM_VEL_ITERATIONS, NUM_POS_ITERATIONS);
-        Renderer::setRenderLayer(MAIN_LAYER);
+        Renderer::setRenderLayer(BOX_LAYER);
     }
 }

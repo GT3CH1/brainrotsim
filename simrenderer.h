@@ -6,9 +6,10 @@
 #define PHYSICSSIM_RENDERER_H
 
 #include <SDL2/SDL.h>
+#include <iostream>
 #include <map>
-
 #include "Color.h"
+#include "config.h"
 
 class Renderer {
 private:

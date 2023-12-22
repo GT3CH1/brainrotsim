@@ -126,7 +126,6 @@ void Renderer::setupScreen() {
     Config::SCREEN_WIDTH = DM.w;
     Config::SCREEN_HEIGHT = DM.h;
     clearRenderer();
-    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     setDrawColor(BLACK);
     bg = new SDL_Rect{0, 0, Config::SCREEN_WIDTH, Config::SCREEN_HEIGHT};
     const int max_y = (Config::SCREEN_HEIGHT) / WINDOW_SCALE;
