@@ -12,6 +12,7 @@ bool Config::debug = true;
 bool Config::outline = false;
 bool Config::runner = true;
 bool Config::grow = true;
+bool Config::sound = false;
 int Config::SCREEN_WIDTH = 64;
 int Config::SCREEN_HEIGHT = 48;
 int Config::SCREEN_CENTER_X = Config::SCREEN_WIDTH / 2;

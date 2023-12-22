@@ -4,7 +4,7 @@
 
 #include "box.h"
 
-Box::Box(b2World *world, SDL_Renderer *renderer) {
+Box::Box(b2World *world) {
     rect = nullptr;
     renderTexture = nullptr;
     body = nullptr;
@@ -12,25 +12,32 @@ Box::Box(b2World *world, SDL_Renderer *renderer) {
     float y = arc4random() % Config::SCREEN_CENTER_Y * 2 + 1;
     x = abs(x);
     y = abs(y);
-    auto size = arc4random() % 5 + 1;
+    const auto size = arc4random() % 5 + 1;
 
-    init(world, renderer, x, y, size, size, Color::randColor());
+    init(world, x, y, size, size, Color::randColor());
     this->rect->w = size;
     this->rect->h = size;
     rect->x = body->GetPosition().x - rect->w / 2.0f;
     rect->y = body->GetPosition().y - rect->h / 2.0f;
 }
 
-Box::Box(b2World *world, SDL_Renderer *renderer, const float x, const float y, const float w, const float h,
-         const Color &color) {
+/**
+ * \brief
+ * \param world The box2d world pointer.
+ * \param x The current X coordinate of the box.
+ * \param y The current Y coordinate of the box.
+ * \param w The width of the box.
+ * \param h The height of the box.
+ * \param color The color of the box.
+ */
+Box::Box(b2World *world, const float x, const float y, const float w, const float h, const Color &color) {
     rect = nullptr;
     renderTexture = nullptr;
     body = nullptr;
-    init(world, renderer, x, y, w, h, color);
+    init(world, x, y, w, h, color);
 }
 
-void Box::init(b2World *world, SDL_Renderer *renderer, const float x, const float y, const float w, const float h,
-               const Color &color) {
+void Box::init(b2World *world, const float x, const float y, const float w, const float h, const Color &color) {
     this->color = color;
     b2BodyDef bodyDef;
     bodyDef.type = b2_dynamicBody;

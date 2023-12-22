@@ -25,6 +25,7 @@ public:
     static int MAX_X;
     static int MAX_Y;
     static int MAX_BOXES;
+    static bool sound;
 };
 
 

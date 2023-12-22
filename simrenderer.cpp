@@ -9,7 +9,6 @@ SDL_Texture *Renderer::render_target = nullptr;
 SDL_Window *Renderer::window = nullptr;
 SDL_Rect *Renderer::bg = nullptr;
 std::map<std::string, SDL_Texture *> Renderer::layers;
-std::string MAIN_LAYER = "_main_renderer";
 /**
  * Initializes the window, renderer, and sets the render scale.
  */
@@ -38,7 +37,7 @@ void Renderer::init() {
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     setupScreen();
-    addLayer(MAIN_LAYER);
+    addLayer(_RENDER_MAIN_LAYER);
 }
 
 void Renderer::addLayer(const std::string &name) {
@@ -76,7 +75,7 @@ void Renderer::clearAllLayers() {
     SDL_SetRenderTarget(renderer, _current);
 }
 
-void Renderer::setDrawColor(const Color &c) { setDrawColor(c.red(), c.blue(), c.green()); }
+void Renderer::setDrawColor(const Color &c) { setDrawColor(c.red(), c.green(), c.blue()); }
 
 void Renderer::setDrawColor(const uint32_t r, const uint32_t g, const uint32_t b, const uint32_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
@@ -105,18 +104,18 @@ void Renderer::copyLayerToRenderer(const std::string &name) {
     SDL_RenderCopy(renderer, _texture, nullptr, nullptr);
 }
 void Renderer::copyAllLayersToRenderer() {
-    setRenderLayer(MAIN_LAYER);
+    setRenderLayer(_RENDER_MAIN_LAYER);
     for (auto &layer: layers) {
         copyLayerToRenderer(layer.first);
     }
     setNullRenderLayer();
-    copyLayerToRenderer(MAIN_LAYER);
+    copyLayerToRenderer(_RENDER_MAIN_LAYER);
 }
 
 
 void Renderer::present() {
     SDL_RenderPresent(renderer);
-    setRenderLayer(MAIN_LAYER);
+    setRenderLayer(_RENDER_MAIN_LAYER);
 }
 
 
@@ -140,4 +139,7 @@ void Renderer::clearLayer(const std::string &name) {
     setRenderLayer(name);
     clearRenderer();
     SDL_SetRenderTarget(renderer, curr_layer);
+}
+void Renderer::drawLine(const SDL_FPoint *p1, const SDL_FPoint *p2) {
+    SDL_RenderDrawLineF(renderer, p1->x, p1->y, p2->x, p2->y);
 }

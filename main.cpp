@@ -44,8 +44,9 @@ void Main::setupWorld() {
     Renderer::addLayer(OUTLINE_LAYER);
 
     Renderer::addLayer(LINE_LAYER);
+    Renderer::setBlendMode(MAIN_LAYER, SDL_BLENDMODE_ADD);
     Renderer::setBlendMode(OUTLINE_LAYER, SDL_BLENDMODE_ADD);
-    Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_BLEND);
+    Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
 }
 
 void Main::reset_simulation() {
@@ -65,15 +66,17 @@ void Main::handle_keyboard() {
     if (Keyboard::keyWasPressed(SDLK_r)) {
         reset_simulation();
     }
-    if (Keyboard::keyWasPressed(SDLK_l))
+    if (Keyboard::keyWasPressed(SDLK_l)) {
         Config::line_mode = !Config::line_mode;
+        Renderer::clearLayer(LINE_LAYER);
+    }
     if (Keyboard::keyWasPressed(SDLK_c))
         Config::collision = !Config::collision;
     if (Keyboard::keyWasPressed(SDLK_b))
-        boxes.push_back(new Box(world, Renderer::renderer));
+        boxes.push_back(new Box(world));
     if (Keyboard::keyWasPressed(SDLK_n))
         for (int i = 0; i < 100; i++)
-            boxes.push_back(new Box(world, Renderer::renderer));
+            boxes.push_back(new Box(world));
     if (Keyboard::keyWasPressed(SDLK_ESCAPE))
         Config::runner = false;
     if (Keyboard::keyWasPressed(SDLK_g))
@@ -88,6 +91,8 @@ void Main::handle_keyboard() {
         Config::outline = !Config::outline;
         Renderer::clearLayer(OUTLINE_LAYER);
     }
+    if (Keyboard::keyWasPressed(SDLK_s))
+        Config::sound = !Config::sound;
     Keyboard::update();
 }
 
@@ -124,20 +129,17 @@ void Main::draw_outline(const SDL_FRect *rect, const b2Body *body) {
 }
 
 void Main::drawLineToBox(const Box *box) {
-    // auto const r = box->color.red();
-    // auto const g = box->color.green();
-    // auto const b = box->color.blue();
-
     const auto center = box->body->GetWorldCenter();
     Renderer::setDrawColor(box->color);
-    // Renderer::setDrawColor(r, g, b);
-    SDL_RenderDrawLineF(Renderer::renderer, center.x * Renderer::WINDOW_SCALE, center.y * Renderer::WINDOW_SCALE,
-                        Config::SCREEN_CENTER_X * Renderer::WINDOW_SCALE, Config::SCREEN_CENTER_Y * Renderer::WINDOW_SCALE);
+    const auto p1 = SDL_FPoint{center.x * Renderer::WINDOW_SCALE, center.y * Renderer::WINDOW_SCALE};
+    const auto p2 = SDL_FPoint{Config::SCREEN_CENTER_X * Renderer::WINDOW_SCALE,
+                               Config::SCREEN_CENTER_Y * Renderer::WINDOW_SCALE};
+    Renderer::drawLine(&p1, &p2);
 }
 
 void Main::addNewBoxes() {
     for (const auto box: *pending_boxes) {
-        auto _box = new Box(world, Renderer::renderer, box->x, box->y, box->w, box->h, box->color);
+        auto _box = new Box(world, box->x, box->y, box->w, box->h, box->color);
         boxes.push_back(_box);
         if (boxes.size() >= Config::MAX_BOXES) {
             break;
@@ -148,13 +150,13 @@ void Main::addNewBoxes() {
 
 void Main::render_boxes(bool &box_has_audio) {
     SDL_FRect dummy;
+    Renderer::setRenderLayer(MAIN_LAYER);
     for (const auto box: boxes) {
         const uint32 r = box->color.red();
         const uint32 g = box->color.green();
         const uint32 b = box->color.blue();
         const auto rect = box->rect;
         const auto body = box->body;
-        // SDL_SetRenderDrawColor(Renderer::renderer, r, g, b, 255);
         Renderer::setDrawColor(r, g, b);
         dummy.x = (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE;
         dummy.y = (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE;
@@ -165,17 +167,16 @@ void Main::render_boxes(bool &box_has_audio) {
         if (box->num_audio_frames > 0) {
             box_has_audio = true;
             beeper.setWaveTone(box->tone);
-            beeper.setSoundOn(true);
+            beeper.setSoundOn(Config::sound);
         }
     }
 
     if (Config::outline) {
         Renderer::setRenderLayer(OUTLINE_LAYER);
         Renderer::setDrawColor(BLACK);
-
         Renderer::clearRenderer();
         Renderer::setDrawColor(WHITE);
-        for (auto box: boxes) {
+        for (const Box *box: boxes) {
             const auto rect = box->rect;
             const auto body = box->body;
             draw_outline(rect, body);
@@ -184,7 +185,9 @@ void Main::render_boxes(bool &box_has_audio) {
     }
     if (Config::line_mode) {
         Renderer::setRenderLayer(LINE_LAYER);
-        for (auto box: boxes)
+        Renderer::setDrawColor(BLACK);
+        Renderer::clearRenderer();
+        for (const auto box: boxes)
             drawLineToBox(box);
         Renderer::setRenderLayer(MAIN_LAYER);
     }
@@ -201,7 +204,7 @@ void Main::run() {
         }
 
         if (boxes.empty())
-            boxes.push_back(new Box(world, Renderer::renderer));
+            boxes.push_back(new Box(world));
 
         Renderer::setDrawColor(BLACK);
         if (Config::clear_on_frame) {
@@ -215,9 +218,6 @@ void Main::run() {
         if (!box_has_audio)
             beeper.setSoundOn(false);
         Renderer::setDrawColor(BLACK);
-        // Renderer::setNullRenderLayer();
-
-        Renderer::copyLayerToRenderer(LINE_LAYER);
         Renderer::copyAllLayersToRenderer();
         Renderer::present();
         world->Step(WORLD_STEP, NUM_VEL_ITERATIONS, NUM_POS_ITERATIONS);
