@@ -18,26 +18,26 @@ private:
     static SDL_Texture *render_target;
     static SDL_Window *window;
     static SDL_Rect *bg;
-    static std::map<std::string, SDL_Texture *> layers;
+    static std::map<int, SDL_Texture *> layers;
+    static inline int num_layers = 0;
 
 public:
     inline static int RENDER_SCALE_X = 100;
     inline static int RENDER_SCALE_Y = 100;
     inline static float WINDOW_SCALE = 10.0f;
-    inline static std::string _RENDER_MAIN_LAYER = "_main_renderer";
+    inline static int _RENDER_MAIN_LAYER = -1;
     static void init();
 
     /**
      * \brief Creates a new layer with the given name.
-     * \param name The name of the render layer.
      */
-    static void addLayer(const std::string &name);
+    static int addLayer();
 
     /**
      * \brief Changes what layer the renderer is currently drawing to.
      * \param name The name of the render layer to target.
      */
-    static void setRenderLayer(const std::string &name);
+    static void setRenderLayer(const int layerId);
 
     /**
      * \brief Sets the renderer to draw to the default layer.
@@ -49,7 +49,7 @@ public:
      * \param name The name of the layer to change the blend mode of.
      * \param blendMode The blend mode to set the layer to.
      */
-    static void setBlendMode(const std::string &name, SDL_BlendMode blendMode);
+    static void setBlendMode(int layerId, SDL_BlendMode blendMode);
 
     /**
      * \brief Clears the renderer.
@@ -94,7 +94,7 @@ public:
      * \brief Copies the given layer to the renderer.
      * \param name The name of the layer to copy.
      */
-    static void copyLayerToRenderer(const std::string &name);
+    static void copyLayerToRenderer(const int layerId);
 
     /**
      * \brief Copies all layers to the renderer.
@@ -115,7 +115,7 @@ public:
      * \brief Clears the given layer.
      * \param name The name of the layer to clear.
      */
-    static void clearLayer(const std::string &name);
+    static void clearLayer(const int id);
 
     /**
      * \brief Draws a line from p1 to p2.

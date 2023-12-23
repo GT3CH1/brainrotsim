@@ -8,12 +8,13 @@ Box::Box(b2World *world) {
     rect = nullptr;
     renderTexture = nullptr;
     body = nullptr;
-    float x = arc4random() % Config::SCREEN_CENTER_X * 2 + 1;
-    float y = arc4random() % Config::SCREEN_CENTER_Y * 2 + 1;
+    float x = rand() % Config::SCREEN_CENTER_X * 2 + 1;
+    float y = rand() % Config::SCREEN_CENTER_Y * 2 + 1;
     x = abs(x);
     y = abs(y);
-    const auto size = arc4random() % 5 + 1;
+    const auto size = rand() % 5 + 1;
 
+    
     init(world, x, y, size, size, Color::randColor());
     this->rect->w = size;
     this->rect->h = size;
@@ -55,8 +56,8 @@ void Box::init(b2World *world, const float x, const float y, const float w, cons
     fixtureDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
     body->CreateFixture(&fixtureDef);
 
-    const int x_sign = arc4random() % 2 == 0 ? 1 : -1;
-    const int y_sign = arc4random() % 2 == 0 ? 1 : -1;
+    const int x_sign = rand() % 2 == 0 ? 1 : -1;
+    const int y_sign = rand() % 2 == 0 ? 1 : -1;
 
     body->ApplyForce(b2Vec2(x_sign * 1000 * body->GetMass(), y_sign * 1000 * body->GetMass()), body->GetWorldCenter(),
                      true);
@@ -77,11 +78,11 @@ void Box::update(SDL_Renderer *the_renderer) {
 }
 
 void Box::onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target) {
-    if (arc4random() % 50 == 0) {
+    if (rand() % BOX_SPAWN_PROBABILITY == 0) {
         Color color = Color::randColor();
-        const float x = fabs(arc4random() % 32);
-        const float y = fabs(arc4random() % 24);
-        pending_boxes->push_back(new BoxInfo{x, y, 1, 1, color});
+        const float x = fabs(rand() % 32);
+        const float y = fabs(rand() % 24);
+        pending_boxes->push_back(new BoxInfo{x, y, 1, 1, Color::toInt(color)});
     }
 
     if (Config::grow) {

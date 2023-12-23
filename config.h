@@ -4,6 +4,7 @@
 
 #ifndef PHYSICSSIM_CONFIG_H
 #define PHYSICSSIM_CONFIG_H
+#include "Color.h"
 
 class Config
 {
@@ -17,7 +18,9 @@ public:
     static bool color_change_on_bounce;
     static bool debug;
     static bool clear_on_frame;
+    static bool smear_line;
     static bool outline;
+    static bool wireframe;
     static int SCREEN_WIDTH;
     static int SCREEN_HEIGHT;
     static int SCREEN_CENTER_X;
@@ -26,6 +29,7 @@ public:
     static int MAX_Y;
     static int MAX_BOXES;
     static bool sound;
+    static bool same_color_mode;
 };
 
 

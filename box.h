@@ -16,12 +16,12 @@ struct BoxInfo {
     float y;
     float w;
     float h;
-    Color &color;
+    uint32_t color;
 };
 
 class Box {
 public:
-    Color color{};
+    Color color;
     SDL_FRect *rect;
     b2Body *body;
     SDL_Texture *renderTexture;
@@ -32,6 +32,7 @@ public:
     void init(b2World *world, float x, float y, float w, float h, const Color &color);
     void update(SDL_Renderer *the_renderer);
     static void onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target);
+    static inline int BOX_SPAWN_PROBABILITY = 1;
 };
 
 #endif // PHYSICSSIM_BOX_HPP

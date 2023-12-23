@@ -8,7 +8,7 @@ SDL_Surface *Renderer::render_surface = nullptr;
 SDL_Texture *Renderer::render_target = nullptr;
 SDL_Window *Renderer::window = nullptr;
 SDL_Rect *Renderer::bg = nullptr;
-std::map<std::string, SDL_Texture *> Renderer::layers;
+std::map<int, SDL_Texture *> Renderer::layers;
 /**
  * Initializes the window, renderer, and sets the render scale.
  */
@@ -17,7 +17,7 @@ void Renderer::init() {
                               SDL_WINDOW_SHOWN);
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
 
     renderer = SDL_CreateRenderer(window, -1,
                                   SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC);
@@ -32,32 +32,35 @@ void Renderer::init() {
 
     SDL_RendererInfo info;
     SDL_GetRendererInfo(renderer, &info);
-    printf("%s", info.name);
+    printf("Using renderer: %s\r\n", info.name);
     SDL_RenderSetScale(renderer, RENDER_SCALE_X, RENDER_SCALE_Y);
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     setupScreen();
-    addLayer(_RENDER_MAIN_LAYER);
+    _RENDER_MAIN_LAYER = addLayer();
 }
 
-void Renderer::addLayer(const std::string &name) {
+int Renderer::addLayer() {
     auto _texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
                                       Config::SCREEN_WIDTH, Config::SCREEN_HEIGHT);
-    layers.insert(std::pair(name, _texture));
+    num_layers++;
+    layers.insert(std::pair(num_layers, _texture));
+    return num_layers;
 }
 
-void Renderer::setRenderLayer(const std::string &name) {
-    const auto _texture = layers.at(name);
+void Renderer::setRenderLayer(const int layerId) {
+    const auto _texture = layers.at(layerId);
     if (_texture == nullptr) {
-        std::cerr << "Layer " << name << " does not exist!" << std::endl;
+        std::cerr << "Layer " << layerId << " does not exist!" << std::endl;
         return;
     }
     SDL_SetRenderTarget(renderer, _texture);
 }
 
 void Renderer::setNullRenderLayer() { SDL_SetRenderTarget(renderer, nullptr); }
-void Renderer::setBlendMode(const std::string &name, const SDL_BlendMode blendMode) {
-    const auto _texture = layers.at(name);
+
+void Renderer::setBlendMode(int layerId, SDL_BlendMode blendMode) {
+    const auto _texture = layers.at(layerId);
     SDL_SetTextureAlphaMod(_texture, 255);
     SDL_SetTextureColorMod(_texture, 255, 255, 255);
     SDL_SetTextureBlendMode(_texture, blendMode);
@@ -95,10 +98,10 @@ void Renderer::drawRect(const SDL_FRect *rect, const bool fill) {
         SDL_RenderDrawRectF(renderer, rect);
 }
 
-void Renderer::copyLayerToRenderer(const std::string &name) {
-    const auto _texture = layers.at(name);
+void Renderer::copyLayerToRenderer(const int layerId) {
+    const auto _texture = layers.at(layerId);
     if (_texture == nullptr) {
-        std::cerr << "Layer " << name << " does not exist!" << std::endl;
+        std::cerr << "Layer " << layerId << " does not exist!" << std::endl;
         return;
     }
     SDL_RenderCopy(renderer, _texture, nullptr, nullptr);
@@ -106,9 +109,12 @@ void Renderer::copyLayerToRenderer(const std::string &name) {
 void Renderer::copyAllLayersToRenderer() {
     setRenderLayer(_RENDER_MAIN_LAYER);
     for (auto &layer: layers) {
+        if (layer.first == _RENDER_MAIN_LAYER)
+            continue;
         copyLayerToRenderer(layer.first);
     }
     setNullRenderLayer();
+
     copyLayerToRenderer(_RENDER_MAIN_LAYER);
 }
 
@@ -133,9 +139,9 @@ void Renderer::setupScreen() {
     Config::SCREEN_CENTER_X = max_x / 2;
     Config::SCREEN_CENTER_Y = max_y / 2;
 }
-void Renderer::clearLayer(const std::string &name) {
+void Renderer::clearLayer(const int layerId) {
     auto const curr_layer = SDL_GetRenderTarget(renderer);
-    setRenderLayer(name);
+    setRenderLayer(layerId);
     clearRenderer();
     SDL_SetRenderTarget(renderer, curr_layer);
 }

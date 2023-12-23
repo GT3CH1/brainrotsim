@@ -6,7 +6,6 @@
 #define PHYSICSSIM_MAIN_H
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 #include <iostream>
 #include <vector>
 #include "Keyboard.hpp"
@@ -44,19 +43,19 @@ public:
     /**
      * \brief TODO: font.
      */
-    static TTF_Font *font;
+    // static TTF_Font *font;
     /**
      * \brief The box layer.
      */
-    inline static std::string BOX_LAYER = "main";
+    inline static int BOX_LAYER = -1;
     /**
      * \brief The outline layer.
      */
-    inline static std::string OUTLINE_LAYER = "outline";
+    inline static int OUTLINE_LAYER = -1;
     /**
      * \brief The line layer.
      */
-    inline static std::string LINE_LAYER = "line";
+    inline static int LINE_LAYER = -1;
 
     /**
      * \brief The list of boxes.

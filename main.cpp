@@ -1,8 +1,9 @@
 #include "main.h"
 
 void Main::setup() {
-    srandom(time(nullptr));
+    srand(time(nullptr));
     Keyboard::Keyboard_Init();
+
     Renderer::init();
     world = new b2World(b2Vec2(0, GRAVITY));
     auto *contactListener = new ContactListener();
@@ -19,7 +20,10 @@ void Main::setup() {
 int main() {
     Main::setup();
     Main::run();
+    return 0;
 }
+
+int WinMain() { return main(); }
 
 void Main::setupWorld() {
     boxes.clear();
@@ -40,13 +44,17 @@ void Main::setupWorld() {
     left = new Wall(-1, 0, 1, world_top, world);
     right = new Wall(world_right, 0, 1, world_top, world);
 
-    Renderer::addLayer(BOX_LAYER);
-    Renderer::addLayer(OUTLINE_LAYER);
+    LINE_LAYER = Renderer::addLayer();
+    BOX_LAYER = Renderer::addLayer();
+    OUTLINE_LAYER = Renderer::addLayer();
 
-    Renderer::addLayer(LINE_LAYER);
-    Renderer::setBlendMode(BOX_LAYER, SDL_BLENDMODE_ADD);
-    Renderer::setBlendMode(OUTLINE_LAYER, SDL_BLENDMODE_ADD);
+    auto _customBlend =
+            SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_DST_COLOR, SDL_BLENDOPERATION_MAXIMUM,
+                                       SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_DST_ALPHA, SDL_BLENDOPERATION_ADD);
+
     Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
+    Renderer::setBlendMode(BOX_LAYER, _customBlend);
+    Renderer::setBlendMode(OUTLINE_LAYER, _customBlend);
 }
 
 void Main::reset_simulation() {
@@ -66,17 +74,26 @@ void Main::handleKeybind() {
     if (Keyboard::keyWasPressed(SDLK_r)) {
         reset_simulation();
     }
-    if (Keyboard::keyWasPressed(SDLK_l)) {
+    if (Keyboard::keyWasPressed(SDLK_l) && !Keyboard::shiftKeyDown()) {
         Config::line_mode = !Config::line_mode;
         Renderer::clearLayer(LINE_LAYER);
+    }
+    if (Keyboard::keyWasPressed(SDLK_l) && Keyboard::shiftKeyDown()) {
+        Config::smear_line = !Config::smear_line;
+        Renderer::clearLayer(LINE_LAYER);
+        Config::line_mode = !Config::line_mode;
     }
     if (Keyboard::keyWasPressed(SDLK_c))
         Config::collision = !Config::collision;
     if (Keyboard::keyWasPressed(SDLK_b))
         boxes.push_back(new Box(world));
     if (Keyboard::keyWasPressed(SDLK_n))
-        for (int i = 0; i < 100; i++)
-            boxes.push_back(new Box(world));
+        for (int i = 0; i < 100; i++) {
+            auto box = new Box(world);
+            boxes.push_back(box);
+            if (Config::same_color_mode)
+                box->color = boxes[0]->color;
+        }
     if (Keyboard::keyWasPressed(SDLK_ESCAPE))
         Config::runner = false;
     if (Keyboard::keyWasPressed(SDLK_g))
@@ -93,6 +110,28 @@ void Main::handleKeybind() {
     }
     if (Keyboard::keyWasPressed(SDLK_s))
         Config::sound = !Config::sound;
+    if (Keyboard::keyWasPressed(SDLK_w)) {
+        Config::wireframe = !Config::wireframe;
+        if (Config::wireframe) {
+            auto _customBlend = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_DST_COLOR,
+                                                           SDL_BLENDOPERATION_MINIMUM, SDL_BLENDFACTOR_SRC_ALPHA,
+                                                           SDL_BLENDFACTOR_DST_ALPHA, SDL_BLENDOPERATION_ADD);
+
+            Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
+            Renderer::setBlendMode(BOX_LAYER, _customBlend);
+            Renderer::setBlendMode(OUTLINE_LAYER, _customBlend);
+        } else {
+            auto _customBlend = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_DST_COLOR,
+                                                           SDL_BLENDOPERATION_MAXIMUM, SDL_BLENDFACTOR_SRC_ALPHA,
+                                                           SDL_BLENDFACTOR_DST_ALPHA, SDL_BLENDOPERATION_ADD);
+
+            Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
+            Renderer::setBlendMode(BOX_LAYER, _customBlend);
+            Renderer::setBlendMode(OUTLINE_LAYER, _customBlend);
+        }
+    }
+    if (Keyboard::keyWasPressed(SDLK_e))
+        Config::same_color_mode = !Config::same_color_mode;
     Keyboard::update();
 }
 
@@ -138,7 +177,10 @@ void Main::drawLineToBox(const Box *box) {
 
 void Main::addNewBoxes() {
     for (const auto box: *pending_boxes) {
-        auto _box = new Box(world, box->x, box->y, box->w, box->h, box->color);
+        auto color = Color::fromInt(box->color);
+        if (Config::same_color_mode)
+            color = boxes[0]->color;
+        auto _box = new Box(world, box->x, box->y, box->w, box->h, color);
         boxes.push_back(_box);
         if (boxes.size() >= Config::MAX_BOXES) {
             break;
@@ -149,6 +191,32 @@ void Main::addNewBoxes() {
 
 void Main::render_boxes(bool &box_has_audio) {
     SDL_FRect dummy;
+
+    if (Config::outline) {
+        Renderer::setRenderLayer(OUTLINE_LAYER);
+        Renderer::setDrawColor(BLACK);
+        Renderer::clearRenderer();
+        Renderer::setDrawColor(WHITE);
+        for (const Box *box: boxes) {
+            const auto rect = box->rect;
+            const auto body = box->body;
+            draw_outline(rect, body);
+        }
+        Renderer::setRenderLayer(BOX_LAYER);
+    }
+    if (Config::line_mode) {
+
+        Renderer::setRenderLayer(LINE_LAYER);
+        if (!Config::smear_line) {
+            Renderer::setDrawColor(BLACK);
+            Renderer::clearRenderer();
+        }
+        // Renderer::clearLayer(LINE_LAYER);
+        for (const auto box: boxes)
+            drawLineToBox(box);
+        Renderer::setRenderLayer(BOX_LAYER);
+    }
+
     Renderer::setRenderLayer(BOX_LAYER);
     for (const auto box: boxes) {
         const auto rect = box->rect;
@@ -166,28 +234,6 @@ void Main::render_boxes(bool &box_has_audio) {
             beeper.setSoundOn(Config::sound);
         }
     }
-
-    if (Config::outline) {
-        Renderer::setRenderLayer(OUTLINE_LAYER);
-        Renderer::setDrawColor(BLACK);
-        Renderer::clearRenderer();
-        Renderer::setDrawColor(WHITE);
-        for (const Box *box: boxes) {
-            const auto rect = box->rect;
-            const auto body = box->body;
-            draw_outline(rect, body);
-        }
-        Renderer::setRenderLayer(BOX_LAYER);
-    }
-    if (Config::line_mode) {
-        Renderer::setDrawColor(BLACK);
-        Renderer::setRenderLayer(LINE_LAYER);
-        Renderer::clearRenderer();
-        // Renderer::clearLayer(LINE_LAYER);
-        for (const auto box: boxes)
-            drawLineToBox(box);
-        Renderer::setRenderLayer(BOX_LAYER);
-    }
 }
 
 void Main::run() {
@@ -200,12 +246,14 @@ void Main::run() {
             continue;
         }
 
-        if (boxes.empty())
-            boxes.push_back(new Box(world));
+        if (boxes.empty()) {
+            auto box = new Box(world);
+            boxes.push_back(box);
+        }
 
         Renderer::setDrawColor(BLACK);
         if (Config::clear_on_frame) {
-            Renderer::clearAllLayers();
+            Renderer::clearLayer(BOX_LAYER);
         }
         if (boxes.size() < Config::MAX_BOXES)
             addNewBoxes();
