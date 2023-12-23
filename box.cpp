@@ -14,7 +14,7 @@ Box::Box(b2World *world) {
     y = abs(y);
     const auto size = rand() % 5 + 1;
 
-    
+
     init(world, x, y, size, size, Color::randColor());
     this->rect->w = size;
     this->rect->h = size;
@@ -80,8 +80,8 @@ void Box::update(SDL_Renderer *the_renderer) {
 void Box::onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target) {
     if (rand() % BOX_SPAWN_PROBABILITY == 0) {
         Color color = Color::randColor();
-        const float x = fabs(rand() % 32);
-        const float y = fabs(rand() % 24);
+        float x = abs(rand() % Config::SCREEN_CENTER_X * 2 + 1);
+        float y = abs(rand() % Config::SCREEN_CENTER_Y * 2 + 1);
         pending_boxes->push_back(new BoxInfo{x, y, 1, 1, Color::toInt(color)});
     }
 

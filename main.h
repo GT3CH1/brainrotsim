@@ -88,6 +88,7 @@ public:
      * \brief Resets the world, and the renderer.
      */
     static void reset_simulation();
+    static void spawnBox();
     /**
      * \brief Handles keybindings.
      */

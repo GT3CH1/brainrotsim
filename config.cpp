@@ -19,6 +19,7 @@ bool Config::grow = true;
 bool Config::sound = false;
 bool Config::wireframe = false;
 bool Config::same_color_mode = false;
+bool Config::quad_line_mode = false;
 int Config::SCREEN_WIDTH = 64;
 int Config::SCREEN_HEIGHT = 48;
 int Config::SCREEN_CENTER_X = Config::SCREEN_WIDTH / 2;

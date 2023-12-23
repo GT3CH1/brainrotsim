@@ -32,7 +32,7 @@ public:
     void init(b2World *world, float x, float y, float w, float h, const Color &color);
     void update(SDL_Renderer *the_renderer);
     static void onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target);
-    static inline int BOX_SPAWN_PROBABILITY = 1;
+    static inline int BOX_SPAWN_PROBABILITY = 50;
 };
 
 #endif // PHYSICSSIM_BOX_HPP

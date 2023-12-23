@@ -49,8 +49,8 @@ void Main::setupWorld() {
     OUTLINE_LAYER = Renderer::addLayer();
 
     auto _customBlend =
-            SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_DST_COLOR, SDL_BLENDOPERATION_MAXIMUM,
-                                       SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_DST_ALPHA, SDL_BLENDOPERATION_ADD);
+            SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDOPERATION_MAXIMUM,
+                                       SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD);
 
     Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
     Renderer::setBlendMode(BOX_LAYER, _customBlend);
@@ -68,6 +68,12 @@ void Main::reset_simulation() {
     Renderer::setRenderLayer(BOX_LAYER);
 }
 
+void Main::spawnBox() {
+    auto box = new Box(world);
+    boxes.push_back(box);
+    if (Config::same_color_mode)
+        box->color = boxes[0]->color;
+}
 void Main::handleKeybind() {
     if (Keyboard::keyWasPressed(SDLK_SPACE))
         Config::paused = !Config::paused;
@@ -80,19 +86,17 @@ void Main::handleKeybind() {
     }
     if (Keyboard::keyWasPressed(SDLK_l) && Keyboard::shiftKeyDown()) {
         Config::smear_line = !Config::smear_line;
+        Config::line_mode = Config::smear_line;
         Renderer::clearLayer(LINE_LAYER);
-        Config::line_mode = !Config::line_mode;
     }
     if (Keyboard::keyWasPressed(SDLK_c))
         Config::collision = !Config::collision;
-    if (Keyboard::keyWasPressed(SDLK_b))
-        boxes.push_back(new Box(world));
+    if (Keyboard::keyWasPressed(SDLK_b)) {
+        spawnBox();
+    }
     if (Keyboard::keyWasPressed(SDLK_n))
         for (int i = 0; i < 100; i++) {
-            auto box = new Box(world);
-            boxes.push_back(box);
-            if (Config::same_color_mode)
-                box->color = boxes[0]->color;
+            spawnBox();
         }
     if (Keyboard::keyWasPressed(SDLK_ESCAPE))
         Config::runner = false;
@@ -132,6 +136,11 @@ void Main::handleKeybind() {
     }
     if (Keyboard::keyWasPressed(SDLK_e))
         Config::same_color_mode = !Config::same_color_mode;
+    if (Keyboard::keyWasPressed(SDLK_q)) {
+        Config::quad_line_mode = !Config::quad_line_mode;
+        Config::line_mode = Config::quad_line_mode;
+        Renderer::clearLayer(LINE_LAYER);
+    }
     Keyboard::update();
 }
 
@@ -168,7 +177,6 @@ void Main::draw_outline(const SDL_FRect *rect, const b2Body *body) {
 
 void Main::drawLineToBox(const Box *box) {
     const auto center = box->body->GetWorldCenter();
-    Renderer::setDrawColor(box->color);
     const auto p1 = SDL_FPoint{center.x * Renderer::WINDOW_SCALE, center.y * Renderer::WINDOW_SCALE};
     const auto p2 = SDL_FPoint{Config::SCREEN_CENTER_X * Renderer::WINDOW_SCALE,
                                Config::SCREEN_CENTER_Y * Renderer::WINDOW_SCALE};
@@ -205,15 +213,38 @@ void Main::render_boxes(bool &box_has_audio) {
         Renderer::setRenderLayer(BOX_LAYER);
     }
     if (Config::line_mode) {
-
         Renderer::setRenderLayer(LINE_LAYER);
         if (!Config::smear_line) {
             Renderer::setDrawColor(BLACK);
             Renderer::clearRenderer();
         }
         // Renderer::clearLayer(LINE_LAYER);
-        for (const auto box: boxes)
-            drawLineToBox(box);
+        for (const auto box: boxes) {
+            Renderer::setDrawColor(box->color);
+
+            if (Config::quad_line_mode) {
+                const auto box_width = box->rect->w / 2 * Renderer::WINDOW_SCALE;
+                const auto box_x = box->body->GetPosition().x * Renderer::WINDOW_SCALE;
+                const auto box_y = box->body->GetPosition().y * Renderer::WINDOW_SCALE;
+                const auto left_x = box_x - box_width;
+                const auto right_x = box_x + box_width;
+                const auto top_y = box_y - box_width;
+                const auto bottom_y = box_y + box_width;
+                const auto screen_center = SDL_FPoint{Config::SCREEN_CENTER_X * Renderer::WINDOW_SCALE,
+                                                      Config::SCREEN_CENTER_Y * Renderer::WINDOW_SCALE};
+                const auto tl = SDL_FPoint{left_x, top_y};
+                const auto bl = SDL_FPoint{left_x, bottom_y};
+                const auto tr = SDL_FPoint{right_x, top_y};
+                const auto br = SDL_FPoint{right_x, bottom_y};
+
+                Renderer::drawLine(&screen_center, &tl);
+                Renderer::drawLine(&screen_center, &tr);
+                Renderer::drawLine(&screen_center, &bl);
+                Renderer::drawLine(&screen_center, &br);
+            } else {
+                drawLineToBox(box);
+            }
+        }
         Renderer::setRenderLayer(BOX_LAYER);
     }
 

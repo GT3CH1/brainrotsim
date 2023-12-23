@@ -30,6 +30,7 @@ public:
     static int MAX_BOXES;
     static bool sound;
     static bool same_color_mode;
+    static bool quad_line_mode;
 };
 
 
