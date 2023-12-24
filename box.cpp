@@ -38,6 +38,8 @@ Box::Box(b2World *world, const float x, const float y, const float w, const floa
     init(world, x, y, w, h, color);
 }
 
+Box::~Box() { delete collision_locs; }
+
 void Box::init(b2World *world, const float x, const float y, const float w, const float h, const Color &color) {
     this->color = color;
     b2BodyDef bodyDef;
@@ -67,6 +69,8 @@ void Box::init(b2World *world, const float x, const float y, const float w, cons
     rect->y = y - h / 2.0f;
     rect->w = w;
     rect->h = h;
+
+    collision_locs = new std::vector<SDL_FPoint>();
 }
 
 void Box::update(SDL_Renderer *the_renderer) {
@@ -102,10 +106,10 @@ void Box::onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target) {
     }
 }
 
-float Box::getX() const { return (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE; }
+float Box::getWindowX() const { return (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE; }
 
-float Box::getY() const { return (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE; }
+float Box::getWindowY() const { return (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE; }
 
-float Box::getWidth() const { return rect->w * Renderer::WINDOW_SCALE; }
+float Box::getScreenWidth() const { return rect->w * Renderer::WINDOW_SCALE; }
 
-SDL_FRect Box::getScreenRect() const { return {getX(), getY(), getWidth(), getWidth()}; }
+SDL_FRect Box::getScreenRect() const { return {getWindowX(), getWindowY(), getScreenWidth(), getScreenWidth()}; }

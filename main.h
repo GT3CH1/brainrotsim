@@ -146,13 +146,24 @@ public:
      */
     static inline float WORLD_STEP = 0.01666f;
 
-    static inline LineMode::LineMode current_linemode = LineMode::NONmsE;
+    static inline LineMode::LineMode current_linemode = LineMode::NONE;
 
     static void handleLineModeToggle();
+
+    static std::vector<Wall *> *walls;
+
+    static bool foundWall(Wall target) {
+        for (const auto wall: *walls) {
+            if (wall->uuid == target.uuid)
+                return true;
+        }
+        return false;
+    }
 };
 
 b2World *Main::world = nullptr;
 Beeper Main::beeper;
+std::vector<Wall *> *Main::walls = new std::vector<Wall *>();
 Wall *Main::bottom = nullptr;
 Wall *Main::top = nullptr;
 Wall *Main::left = nullptr;
@@ -172,21 +183,57 @@ class ContactListener final : public b2ContactListener {
         const auto boxB = reinterpret_cast<Box *>(fixtureB->GetUserData().pointer);
         if (boxA && boxB && !Config::collision)
             return;
-        if (boxA) {
+        if (boxA)
             Box::onCollision(Main::pending_boxes, boxA);
-        }
-        if (boxB) {
+        if (boxB)
             Box::onCollision(Main::pending_boxes, boxB);
-        }
     }
 
+    static SDL_FPoint getCollisionPoint(const Box *boxA) {
+        SDL_FPoint pt{boxA->getWindowX(), boxA->getWindowY()};
+        if (pt.x < 1.5)
+            pt.x = 0;
+        else if (boxA->getWindowX() + (boxA->rect->w * 10) > Config::SCREEN_WIDTH - Config::SCREEN_WIDTH * 0.02f) {
+            pt.x = Config::SCREEN_WIDTH;
+        } else
+            pt.x = boxA->body->GetPosition().x * Renderer::WINDOW_SCALE;
+        if (pt.y < 1.5)
+            pt.y = 0;
+        else if (boxA->getWindowY() + (boxA->rect->w * 10) > Config::SCREEN_HEIGHT - Config::SCREEN_HEIGHT * 0.02f) {
+            pt.y = Config::SCREEN_HEIGHT;
+        } else
+            pt.y = boxA->body->GetPosition().y * Renderer::WINDOW_SCALE;
+        return pt;
+    }
     void PreSolve(b2Contact *contact, const b2Manifold *oldManifold) override {
         b2Fixture *fixtureA = contact->GetFixtureA();
         b2Fixture *fixtureB = contact->GetFixtureB();
-        const Box *boxA = reinterpret_cast<Box *>(fixtureA->GetUserData().pointer);
-        const Box *boxB = reinterpret_cast<Box *>(fixtureB->GetUserData().pointer);
+        const auto *boxA = reinterpret_cast<Box *>(fixtureA->GetUserData().pointer);
+        const auto *boxB = reinterpret_cast<Box *>(fixtureB->GetUserData().pointer);
+        const auto *wallA = reinterpret_cast<Wall *>(fixtureA->GetUserData().pointer);
+        const auto *wallB = reinterpret_cast<Wall *>(fixtureB->GetUserData().pointer);
+        bool wallAFound = false;
+        bool wallBFound = false;
+        if (wallA != nullptr)
+            wallAFound = Main::foundWall(*wallA);
+        if (wallB != nullptr)
+            wallBFound = Main::foundWall(*wallB);
         if (boxA && boxB && !Config::collision)
             contact->SetEnabled(false);
+        if (boxA && boxB)
+            return;
+        if (boxA && wallAFound) {
+            boxA->collision_locs->push_back(getCollisionPoint(boxA));
+        }
+        if (boxA && wallBFound) {
+            boxA->collision_locs->push_back(getCollisionPoint(boxA));
+        }
+        if (boxB && wallAFound) {
+            boxB->collision_locs->push_back(getCollisionPoint(boxB));
+        }
+        if (boxB && wallBFound) {
+            boxB->collision_locs->push_back(getCollisionPoint(boxB));
+        }
     }
 };
 

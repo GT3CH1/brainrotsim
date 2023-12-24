@@ -17,7 +17,6 @@ private:
     static SDL_Surface *render_surface;
     static SDL_Texture *render_target;
     static SDL_Window *window;
-    static SDL_Rect *bg;
     static std::map<int, SDL_Texture *> layers;
     static inline int num_layers = 0;
 
@@ -26,6 +25,10 @@ public:
     inline static int RENDER_SCALE_Y = 100;
     inline static float WINDOW_SCALE = 10.0f;
     inline static int _RENDER_MAIN_LAYER = -1;
+    inline static SDL_FPoint tl_corner = SDL_FPoint{0, 0};
+    inline static SDL_FPoint br_corner;
+    inline static SDL_FPoint tr_corner;
+    inline static SDL_FPoint bl_corner;
     static void init();
 
     /**

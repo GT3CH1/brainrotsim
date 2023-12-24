@@ -7,7 +7,6 @@ SDL_Renderer *Renderer::renderer = nullptr;
 SDL_Surface *Renderer::render_surface = nullptr;
 SDL_Texture *Renderer::render_target = nullptr;
 SDL_Window *Renderer::window = nullptr;
-SDL_Rect *Renderer::bg = nullptr;
 std::map<int, SDL_Texture *> Renderer::layers;
 /**
  * Initializes the window, renderer, and sets the render scale.
@@ -133,11 +132,13 @@ void Renderer::setupScreen() {
     Config::SCREEN_HEIGHT = DM.h;
     clearRenderer();
     setDrawColor(BLACK);
-    bg = new SDL_Rect{0, 0, Config::SCREEN_WIDTH, Config::SCREEN_HEIGHT};
     const int max_y = (Config::SCREEN_HEIGHT) / WINDOW_SCALE;
     const int max_x = (Config::SCREEN_WIDTH) / WINDOW_SCALE;
     Config::SCREEN_CENTER_X = max_x / 2;
     Config::SCREEN_CENTER_Y = max_y / 2;
+    bl_corner = SDL_FPoint{0, Config::SCREEN_CENTER_Y * 20.0f};
+    tr_corner = SDL_FPoint{Config::SCREEN_CENTER_X * 20.0f, 0};
+    br_corner = SDL_FPoint{Config::SCREEN_CENTER_X * 20.0f, Config::SCREEN_CENTER_Y * 20.0f};
 }
 void Renderer::clearLayer(const int layerId) {
     auto const curr_layer = SDL_GetRenderTarget(renderer);

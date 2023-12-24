@@ -16,7 +16,6 @@ if (MACOSX)
     include_directories(/opt/homebrew/include)
     link_directories(/opt/homebrew/lib)
 endif ()
-set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 include_directories(/usr/local/include)
 add_executable(physicssim main.cpp box.h
         box.cpp

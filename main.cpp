@@ -43,7 +43,10 @@ void Main::setupWorld() {
     top = new Wall(0, -1, world_right, 1.0f, world);
     left = new Wall(-1, 0, 1, world_top, world);
     right = new Wall(world_right, 0, 1, world_top, world);
-
+    walls->push_back(bottom);
+    walls->push_back(top);
+    walls->push_back(left);
+    walls->push_back(right);
     LINE_LAYER = Renderer::addLayer();
     BOX_LAYER = Renderer::addLayer();
     OUTLINE_LAYER = Renderer::addLayer();
@@ -201,19 +204,24 @@ void Main::handleLineModes() {
     }
     for (const auto box: boxes) {
         Renderer::setDrawColor(box->color);
-        const auto box_width = box->rect->w / 2 * Renderer::WINDOW_SCALE;
-        const auto box_x = box->body->GetPosition().x * Renderer::WINDOW_SCALE;
-        const auto box_y = box->body->GetPosition().y * Renderer::WINDOW_SCALE;
-        const auto left_x = box_x - box_width;
+        const auto box_width = box->getScreenWidth();
+        const auto box_x = box->getWindowX();
+        const auto box_y = box->getWindowY();
         const auto right_x = box_x + box_width;
-        const auto top_y = box_y - box_width;
         const auto bottom_y = box_y + box_width;
         const auto screen_center = SDL_FPoint{Config::SCREEN_CENTER_X * Renderer::WINDOW_SCALE,
                                               Config::SCREEN_CENTER_Y * Renderer::WINDOW_SCALE};
-        const auto tl = SDL_FPoint{left_x, top_y};
-        const auto bl = SDL_FPoint{left_x, bottom_y};
-        const auto tr = SDL_FPoint{right_x, top_y};
+        const auto tl = SDL_FPoint{box_x, box_y};
+        const auto bl = SDL_FPoint{box_x, bottom_y};
+        const auto tr = SDL_FPoint{right_x, box_y};
         const auto br = SDL_FPoint{right_x, bottom_y};
+        if (current_linemode == LineMode::COLLISION) {
+            const auto center = box->body->GetWorldCenter();
+            const auto p1 = SDL_FPoint{center.x * Renderer::WINDOW_SCALE, center.y * Renderer::WINDOW_SCALE};
+            for (auto point: *box->collision_locs) {
+                Renderer::drawLine(&p1, &point);
+            }
+        }
         if (current_linemode == LineMode::QUAD) {
             Renderer::drawLine(&screen_center, &tl);
             Renderer::drawLine(&screen_center, &tr);
@@ -221,14 +229,10 @@ void Main::handleLineModes() {
             Renderer::drawLine(&screen_center, &br);
         }
         if (current_linemode == LineMode::CORNER) {
-            constexpr auto tl_corner = SDL_FPoint{0, 0};
-            const auto bl_corner = SDL_FPoint{0, Config::SCREEN_CENTER_Y * 20.0f};
-            const auto tr_corner = SDL_FPoint{Config::SCREEN_CENTER_X * 20.0f, 0};
-            const auto br_corner = SDL_FPoint{Config::SCREEN_CENTER_X * 20.0f, Config::SCREEN_CENTER_Y * 20.0f};
-            Renderer::drawLine(&tl_corner, &tl);
-            Renderer::drawLine(&tr_corner, &tr);
-            Renderer::drawLine(&bl_corner, &bl);
-            Renderer::drawLine(&br_corner, &br);
+            Renderer::drawLine(&Renderer::tl_corner, &tl);
+            Renderer::drawLine(&Renderer::tr_corner, &tr);
+            Renderer::drawLine(&Renderer::bl_corner, &bl);
+            Renderer::drawLine(&Renderer::br_corner, &br);
         } else if (current_linemode == LineMode::CENTER) {
             drawLineToBox(box);
         }

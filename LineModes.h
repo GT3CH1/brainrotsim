@@ -4,8 +4,8 @@
 
 #ifndef LINEMODES_H
 #define LINEMODES_H
-static inline int NUM_LINE_MODES = 4;
+static inline int NUM_LINE_MODES = 5;
 namespace LineMode {
-    enum LineMode { NONE, CENTER, QUAD, CORNER };
+    enum LineMode { NONE, CENTER, QUAD, CORNER, COLLISION };
 }
 #endif // LINEMODES_H

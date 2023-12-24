@@ -29,13 +29,15 @@ public:
     float tone = 0;
     explicit Box(b2World *world);
     Box(b2World *world, float x, float y, float w, float h, const Color &color);
+    ~Box();
     void init(b2World *world, float x, float y, float w, float h, const Color &color);
     void update(SDL_Renderer *the_renderer);
     static void onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target);
-    float getX() const;
-    float getY() const;
-    float getWidth() const;
+    float getWindowX() const;
+    float getWindowY() const;
+    float getScreenWidth() const;
     SDL_FRect getScreenRect() const;
+    std::vector<SDL_FPoint>* collision_locs;
     static inline int BOX_SPAWN_PROBABILITY = 50;
 };
 
