@@ -79,7 +79,7 @@ public:
     /**
      * \brief The gravity of the simulation.
      */
-    inline static float GRAVITY = 9.8f;
+    inline static float GRAVITY = 0;
     /**
      * \brief Sets up the box2d world.
      */
@@ -117,6 +117,7 @@ public:
      */
     static void addNewBoxes();
 
+    static void handleLineModes();
     /**
      * \brief Renders all boxes in the simulation.
      * \param box_has_audio Whether to play an audio tone.
@@ -142,6 +143,8 @@ public:
      * \brief The delta time change for box2d (1/60).
      */
     static inline float WORLD_STEP = 0.01666f;
+
+    static inline int song_idx = 0;
 };
 
 b2World *Main::world = nullptr;

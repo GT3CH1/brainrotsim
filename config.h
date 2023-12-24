@@ -31,6 +31,8 @@ public:
     static bool sound;
     static bool same_color_mode;
     static bool quad_line_mode;
+    static bool corner_line_mode;
+    static bool render_boxes;
 };
 
 

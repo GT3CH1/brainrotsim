@@ -1,5 +1,8 @@
 #include "main.h"
 
+
+#include "songs.h"
+
 void Main::setup() {
     srand(time(nullptr));
     Keyboard::Keyboard_Init();
@@ -86,7 +89,6 @@ void Main::handleKeybind() {
     }
     if (Keyboard::keyWasPressed(SDLK_l) && Keyboard::shiftKeyDown()) {
         Config::smear_line = !Config::smear_line;
-        Config::line_mode = Config::smear_line;
         Renderer::clearLayer(LINE_LAYER);
     }
     if (Keyboard::keyWasPressed(SDLK_c))
@@ -116,6 +118,10 @@ void Main::handleKeybind() {
         Config::sound = !Config::sound;
     if (Keyboard::keyWasPressed(SDLK_w)) {
         Config::wireframe = !Config::wireframe;
+        Config::outline = Config::wireframe;
+        Config::line_mode = Config::wireframe;
+        Renderer::clearLayer(OUTLINE_LAYER);
+        Renderer::clearLayer(LINE_LAYER);
         if (Config::wireframe) {
             auto _customBlend = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_DST_COLOR,
                                                            SDL_BLENDOPERATION_MINIMUM, SDL_BLENDFACTOR_SRC_ALPHA,
@@ -139,7 +145,19 @@ void Main::handleKeybind() {
     if (Keyboard::keyWasPressed(SDLK_q)) {
         Config::quad_line_mode = !Config::quad_line_mode;
         Config::line_mode = Config::quad_line_mode;
+        if (Config::quad_line_mode)
+            Config::corner_line_mode = false;
         Renderer::clearLayer(LINE_LAYER);
+    }
+    if (Keyboard::keyWasPressed(SDLK_y)) {
+        Config::corner_line_mode = !Config::corner_line_mode;
+        Config::line_mode = Config::corner_line_mode;
+        if (Config::corner_line_mode)
+            Config::quad_line_mode = false;
+        Renderer::clearLayer(LINE_LAYER);
+    }
+    if (Keyboard::keyWasPressed(SDLK_h)) {
+        Config::render_boxes = !Config::render_boxes;
     }
     Keyboard::update();
 }
@@ -196,10 +214,51 @@ void Main::addNewBoxes() {
     }
     pending_boxes->clear();
 }
+void Main::handleLineModes() {
+    Renderer::setRenderLayer(LINE_LAYER);
+    if (!Config::smear_line) {
+        Renderer::setDrawColor(BLACK);
+        Renderer::clearRenderer();
+    }
+    for (const auto box: boxes) {
+        Renderer::setDrawColor(box->color);
+        const auto box_width = box->rect->w / 2 * Renderer::WINDOW_SCALE;
+        const auto box_x = box->body->GetPosition().x * Renderer::WINDOW_SCALE;
+        const auto box_y = box->body->GetPosition().y * Renderer::WINDOW_SCALE;
+        const auto left_x = box_x - box_width;
+        const auto right_x = box_x + box_width;
+        const auto top_y = box_y - box_width;
+        const auto bottom_y = box_y + box_width;
+        const auto screen_center = SDL_FPoint{Config::SCREEN_CENTER_X * Renderer::WINDOW_SCALE,
+                                              Config::SCREEN_CENTER_Y * Renderer::WINDOW_SCALE};
+        const auto tl = SDL_FPoint{left_x, top_y};
+        const auto bl = SDL_FPoint{left_x, bottom_y};
+        const auto tr = SDL_FPoint{right_x, top_y};
+        const auto br = SDL_FPoint{right_x, bottom_y};
+        if (Config::quad_line_mode) {
+            Renderer::drawLine(&screen_center, &tl);
+            Renderer::drawLine(&screen_center, &tr);
+            Renderer::drawLine(&screen_center, &bl);
+            Renderer::drawLine(&screen_center, &br);
+        }
+        if (Config::corner_line_mode) {
+            const auto tl_corner = SDL_FPoint{0, 0};
+            const auto bl_corner = SDL_FPoint{0, Config::SCREEN_CENTER_Y * 20.0f};
+            const auto tr_corner = SDL_FPoint{Config::SCREEN_CENTER_X * 20.0f, 0};
+            const auto br_corner = SDL_FPoint{Config::SCREEN_CENTER_X * 20.0f, Config::SCREEN_CENTER_Y * 20.0f};
+            Renderer::drawLine(&tl_corner, &tl);
+            Renderer::drawLine(&tr_corner, &tr);
+            Renderer::drawLine(&bl_corner, &bl);
+            Renderer::drawLine(&br_corner, &br);
+        } else if (Config::line_mode) {
+            drawLineToBox(box);
+        }
+    }
+    Renderer::setRenderLayer(BOX_LAYER);
+}
 
 void Main::render_boxes(bool &box_has_audio) {
     SDL_FRect dummy;
-
     if (Config::outline) {
         Renderer::setRenderLayer(OUTLINE_LAYER);
         Renderer::setDrawColor(BLACK);
@@ -213,51 +272,20 @@ void Main::render_boxes(bool &box_has_audio) {
         Renderer::setRenderLayer(BOX_LAYER);
     }
     if (Config::line_mode) {
-        Renderer::setRenderLayer(LINE_LAYER);
-        if (!Config::smear_line) {
-            Renderer::setDrawColor(BLACK);
-            Renderer::clearRenderer();
-        }
-        // Renderer::clearLayer(LINE_LAYER);
-        for (const auto box: boxes) {
-            Renderer::setDrawColor(box->color);
-
-            if (Config::quad_line_mode) {
-                const auto box_width = box->rect->w / 2 * Renderer::WINDOW_SCALE;
-                const auto box_x = box->body->GetPosition().x * Renderer::WINDOW_SCALE;
-                const auto box_y = box->body->GetPosition().y * Renderer::WINDOW_SCALE;
-                const auto left_x = box_x - box_width;
-                const auto right_x = box_x + box_width;
-                const auto top_y = box_y - box_width;
-                const auto bottom_y = box_y + box_width;
-                const auto screen_center = SDL_FPoint{Config::SCREEN_CENTER_X * Renderer::WINDOW_SCALE,
-                                                      Config::SCREEN_CENTER_Y * Renderer::WINDOW_SCALE};
-                const auto tl = SDL_FPoint{left_x, top_y};
-                const auto bl = SDL_FPoint{left_x, bottom_y};
-                const auto tr = SDL_FPoint{right_x, top_y};
-                const auto br = SDL_FPoint{right_x, bottom_y};
-
-                Renderer::drawLine(&screen_center, &tl);
-                Renderer::drawLine(&screen_center, &tr);
-                Renderer::drawLine(&screen_center, &bl);
-                Renderer::drawLine(&screen_center, &br);
-            } else {
-                drawLineToBox(box);
-            }
-        }
-        Renderer::setRenderLayer(BOX_LAYER);
+        handleLineModes();
     }
-
     Renderer::setRenderLayer(BOX_LAYER);
     for (const auto box: boxes) {
-        const auto rect = box->rect;
-        const auto body = box->body;
-        Renderer::setDrawColor(box->color);
-        dummy.x = (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE;
-        dummy.y = (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE;
-        dummy.w = rect->w * Renderer::WINDOW_SCALE;
-        dummy.h = dummy.w;
-        Renderer::drawRect(&dummy);
+        if (Config::render_boxes) {
+            const auto rect = box->rect;
+            const auto body = box->body;
+            dummy.x = (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE;
+            dummy.y = (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE;
+            dummy.w = rect->w * Renderer::WINDOW_SCALE;
+            dummy.h = dummy.w;
+            Renderer::setDrawColor(box->color);
+            Renderer::drawRect(&dummy);
+        }
         box->num_audio_frames--;
         if (box->num_audio_frames > 0) {
             box_has_audio = true;
