@@ -9,12 +9,13 @@
 #include <iostream>
 #include <vector>
 #include "Keyboard.hpp"
+#include "LineModes.h"
 #include "Wall.h"
 #include "beeper.h"
+#include "blendmodes.h"
 #include "box.h"
 #include "config.h"
 #include "simrenderer.h"
-
 /**
  * \brief Contains information and methods for handling the simulation.
  */
@@ -89,6 +90,7 @@ public:
      */
     static void reset_simulation();
     static void spawnBox();
+    static void handleWireFrameToggle();
     /**
      * \brief Handles keybindings.
      */
@@ -104,7 +106,7 @@ public:
      * \param rect The rect to draw an outline of.
      * \param body The box2d body of the rect.
      */
-    static void draw_outline(const SDL_FRect *rect, const b2Body *body);
+    static void draw_outline(const Box *box);
 
     /**
      * \brief Draws a line from the center of the screen to the center of the given box.
@@ -144,7 +146,9 @@ public:
      */
     static inline float WORLD_STEP = 0.01666f;
 
-    static inline int song_idx = 0;
+    static inline LineMode::LineMode current_linemode = LineMode::NONmsE;
+
+    static void handleLineModeToggle();
 };
 
 b2World *Main::world = nullptr;

@@ -8,8 +8,8 @@ Box::Box(b2World *world) {
     rect = nullptr;
     renderTexture = nullptr;
     body = nullptr;
-    float x = rand() % Config::SCREEN_CENTER_X * 2 + 1;
-    float y = rand() % Config::SCREEN_CENTER_Y * 2 + 1;
+    float x = rand() % (int) Config::SCREEN_CENTER_X * 2 + 1;
+    float y = rand() % (int) Config::SCREEN_CENTER_Y * 2 + 1;
     x = abs(x);
     y = abs(y);
     const auto size = rand() % 5 + 1;
@@ -80,8 +80,8 @@ void Box::update(SDL_Renderer *the_renderer) {
 void Box::onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target) {
     if (rand() % BOX_SPAWN_PROBABILITY == 0) {
         Color color = Color::randColor();
-        float x = abs(rand() % Config::SCREEN_CENTER_X * 2 + 1);
-        float y = abs(rand() % Config::SCREEN_CENTER_Y * 2 + 1);
+        float x = abs(rand() % (int) Config::SCREEN_CENTER_X * 2 + 1);
+        float y = abs(rand() % (int) Config::SCREEN_CENTER_Y * 2 + 1);
         pending_boxes->push_back(new BoxInfo{x, y, 1, 1, Color::toInt(color)});
     }
 
@@ -101,3 +101,11 @@ void Box::onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target) {
         target->tone = tone;
     }
 }
+
+float Box::getX() const { return (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE; }
+
+float Box::getY() const { return (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE; }
+
+float Box::getWidth() const { return rect->w * Renderer::WINDOW_SCALE; }
+
+SDL_FRect Box::getScreenRect() const { return {getX(), getY(), getWidth(), getWidth()}; }

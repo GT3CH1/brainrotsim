@@ -1,8 +1,5 @@
 #include "main.h"
 
-
-#include "songs.h"
-
 void Main::setup() {
     srand(time(nullptr));
     Keyboard::Keyboard_Init();
@@ -39,10 +36,10 @@ void Main::setupWorld() {
         world->DestroyBody(left->body);
     if (right != nullptr)
         world->DestroyBody(right->body);
-    const int world_top = Config::SCREEN_HEIGHT / Renderer::WINDOW_SCALE;
-    const int world_right = Config::SCREEN_WIDTH / Renderer::WINDOW_SCALE;
+    const float world_top = Config::SCREEN_HEIGHT / Renderer::WINDOW_SCALE;
+    const float world_right = Config::SCREEN_WIDTH / Renderer::WINDOW_SCALE;
 
-    bottom = new Wall(0, world_top - 1, world_right, 1.0f, world);
+    bottom = new Wall(0, world_top, world_right, 1.0f, world);
     top = new Wall(0, -1, world_right, 1.0f, world);
     left = new Wall(-1, 0, 1, world_top, world);
     right = new Wall(world_right, 0, 1, world_top, world);
@@ -51,13 +48,9 @@ void Main::setupWorld() {
     BOX_LAYER = Renderer::addLayer();
     OUTLINE_LAYER = Renderer::addLayer();
 
-    auto _customBlend =
-            SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDOPERATION_MAXIMUM,
-                                       SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD);
-
     Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
-    Renderer::setBlendMode(BOX_LAYER, _customBlend);
-    Renderer::setBlendMode(OUTLINE_LAYER, _customBlend);
+    Renderer::setBlendMode(BOX_LAYER, normal_blend_mode);
+    Renderer::setBlendMode(OUTLINE_LAYER, normal_blend_mode);
 }
 
 void Main::reset_simulation() {
@@ -72,10 +65,35 @@ void Main::reset_simulation() {
 }
 
 void Main::spawnBox() {
-    auto box = new Box(world);
+    auto const box = new Box(world);
     boxes.push_back(box);
     if (Config::same_color_mode)
         box->color = boxes[0]->color;
+}
+void Main::handleWireFrameToggle() {
+    Config::wireframe = !Config::wireframe;
+    Config::outline = Config::wireframe;
+    Config::line_mode = Config::wireframe;
+    Renderer::clearLayer(OUTLINE_LAYER);
+    Renderer::clearLayer(LINE_LAYER);
+    if (Config::wireframe) {
+        Config::smear_line = true;
+        Config::outline = true;
+        Config::line_mode = true;
+        if (current_linemode == LineMode::NONE)
+            current_linemode = LineMode::CENTER;
+    } else {
+        Config::smear_line = false;
+    }
+    SDL_BlendMode _customBlend;
+    if (Config::wireframe) {
+        _customBlend = wireframe_blend_mode;
+    } else {
+        _customBlend = normal_blend_mode;
+    }
+    Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
+    Renderer::setBlendMode(BOX_LAYER, _customBlend);
+    Renderer::setBlendMode(OUTLINE_LAYER, _customBlend);
 }
 void Main::handleKeybind() {
     if (Keyboard::keyWasPressed(SDLK_SPACE))
@@ -84,7 +102,7 @@ void Main::handleKeybind() {
         reset_simulation();
     }
     if (Keyboard::keyWasPressed(SDLK_l) && !Keyboard::shiftKeyDown()) {
-        Config::line_mode = !Config::line_mode;
+        handleLineModeToggle();
         Renderer::clearLayer(LINE_LAYER);
     }
     if (Keyboard::keyWasPressed(SDLK_l) && Keyboard::shiftKeyDown()) {
@@ -117,45 +135,10 @@ void Main::handleKeybind() {
     if (Keyboard::keyWasPressed(SDLK_s))
         Config::sound = !Config::sound;
     if (Keyboard::keyWasPressed(SDLK_w)) {
-        Config::wireframe = !Config::wireframe;
-        Config::outline = Config::wireframe;
-        Config::line_mode = Config::wireframe;
-        Renderer::clearLayer(OUTLINE_LAYER);
-        Renderer::clearLayer(LINE_LAYER);
-        if (Config::wireframe) {
-            auto _customBlend = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_DST_COLOR,
-                                                           SDL_BLENDOPERATION_MINIMUM, SDL_BLENDFACTOR_SRC_ALPHA,
-                                                           SDL_BLENDFACTOR_DST_ALPHA, SDL_BLENDOPERATION_ADD);
-
-            Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
-            Renderer::setBlendMode(BOX_LAYER, _customBlend);
-            Renderer::setBlendMode(OUTLINE_LAYER, _customBlend);
-        } else {
-            auto _customBlend = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_COLOR, SDL_BLENDFACTOR_DST_COLOR,
-                                                           SDL_BLENDOPERATION_MAXIMUM, SDL_BLENDFACTOR_SRC_ALPHA,
-                                                           SDL_BLENDFACTOR_DST_ALPHA, SDL_BLENDOPERATION_ADD);
-
-            Renderer::setBlendMode(LINE_LAYER, SDL_BLENDMODE_NONE);
-            Renderer::setBlendMode(BOX_LAYER, _customBlend);
-            Renderer::setBlendMode(OUTLINE_LAYER, _customBlend);
-        }
+        handleWireFrameToggle();
     }
     if (Keyboard::keyWasPressed(SDLK_e))
         Config::same_color_mode = !Config::same_color_mode;
-    if (Keyboard::keyWasPressed(SDLK_q)) {
-        Config::quad_line_mode = !Config::quad_line_mode;
-        Config::line_mode = Config::quad_line_mode;
-        if (Config::quad_line_mode)
-            Config::corner_line_mode = false;
-        Renderer::clearLayer(LINE_LAYER);
-    }
-    if (Keyboard::keyWasPressed(SDLK_y)) {
-        Config::corner_line_mode = !Config::corner_line_mode;
-        Config::line_mode = Config::corner_line_mode;
-        if (Config::corner_line_mode)
-            Config::quad_line_mode = false;
-        Renderer::clearLayer(LINE_LAYER);
-    }
     if (Keyboard::keyWasPressed(SDLK_h)) {
         Config::render_boxes = !Config::render_boxes;
     }
@@ -184,13 +167,9 @@ void Main::onKeyPress() {
     }
 }
 
-void Main::draw_outline(const SDL_FRect *rect, const b2Body *body) {
-    SDL_FRect dummy;
-    dummy.x = (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE;
-    dummy.y = (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE;
-    dummy.w = rect->w * Renderer::WINDOW_SCALE;
-    dummy.h = dummy.w;
-    Renderer::drawRect(&dummy, false);
+void Main::draw_outline(const Box *box) {
+    auto const _b = box->getScreenRect();
+    Renderer::drawRect(&_b, false);
 }
 
 void Main::drawLineToBox(const Box *box) {
@@ -235,14 +214,14 @@ void Main::handleLineModes() {
         const auto bl = SDL_FPoint{left_x, bottom_y};
         const auto tr = SDL_FPoint{right_x, top_y};
         const auto br = SDL_FPoint{right_x, bottom_y};
-        if (Config::quad_line_mode) {
+        if (current_linemode == LineMode::QUAD) {
             Renderer::drawLine(&screen_center, &tl);
             Renderer::drawLine(&screen_center, &tr);
             Renderer::drawLine(&screen_center, &bl);
             Renderer::drawLine(&screen_center, &br);
         }
-        if (Config::corner_line_mode) {
-            const auto tl_corner = SDL_FPoint{0, 0};
+        if (current_linemode == LineMode::CORNER) {
+            constexpr auto tl_corner = SDL_FPoint{0, 0};
             const auto bl_corner = SDL_FPoint{0, Config::SCREEN_CENTER_Y * 20.0f};
             const auto tr_corner = SDL_FPoint{Config::SCREEN_CENTER_X * 20.0f, 0};
             const auto br_corner = SDL_FPoint{Config::SCREEN_CENTER_X * 20.0f, Config::SCREEN_CENTER_Y * 20.0f};
@@ -250,7 +229,7 @@ void Main::handleLineModes() {
             Renderer::drawLine(&tr_corner, &tr);
             Renderer::drawLine(&bl_corner, &bl);
             Renderer::drawLine(&br_corner, &br);
-        } else if (Config::line_mode) {
+        } else if (current_linemode == LineMode::CENTER) {
             drawLineToBox(box);
         }
     }
@@ -258,33 +237,24 @@ void Main::handleLineModes() {
 }
 
 void Main::render_boxes(bool &box_has_audio) {
-    SDL_FRect dummy;
     if (Config::outline) {
         Renderer::setRenderLayer(OUTLINE_LAYER);
         Renderer::setDrawColor(BLACK);
         Renderer::clearRenderer();
         Renderer::setDrawColor(WHITE);
         for (const Box *box: boxes) {
-            const auto rect = box->rect;
-            const auto body = box->body;
-            draw_outline(rect, body);
+            draw_outline(box);
         }
-        Renderer::setRenderLayer(BOX_LAYER);
     }
-    if (Config::line_mode) {
+    if (current_linemode != LineMode::NONE) {
         handleLineModes();
     }
     Renderer::setRenderLayer(BOX_LAYER);
     for (const auto box: boxes) {
         if (Config::render_boxes) {
-            const auto rect = box->rect;
-            const auto body = box->body;
-            dummy.x = (body->GetPosition().x - rect->w / 2.0f) * Renderer::WINDOW_SCALE;
-            dummy.y = (body->GetPosition().y - rect->h / 2.0f) * Renderer::WINDOW_SCALE;
-            dummy.w = rect->w * Renderer::WINDOW_SCALE;
-            dummy.h = dummy.w;
             Renderer::setDrawColor(box->color);
-            Renderer::drawRect(&dummy);
+            auto _rect = box->getScreenRect();
+            Renderer::drawRect(&_rect);
         }
         box->num_audio_frames--;
         if (box->num_audio_frames > 0) {
@@ -293,6 +263,10 @@ void Main::render_boxes(bool &box_has_audio) {
             beeper.setSoundOn(Config::sound);
         }
     }
+}
+void Main::handleLineModeToggle() {
+    const auto mode = static_cast<LineMode::LineMode>((current_linemode + 1) % NUM_LINE_MODES);
+    current_linemode = mode;
 }
 
 void Main::run() {

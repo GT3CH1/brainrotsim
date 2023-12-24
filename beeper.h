@@ -54,7 +54,7 @@ public:
     void setWaveType(int waveTypeID);
 
     //Set tone (in Hz) produced by beeper
-    void setWaveTone(int waveHz);
+    void setWaveTone(float waveHz);
 };
 
 

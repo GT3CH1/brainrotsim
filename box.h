@@ -32,6 +32,10 @@ public:
     void init(b2World *world, float x, float y, float w, float h, const Color &color);
     void update(SDL_Renderer *the_renderer);
     static void onCollision(std::vector<BoxInfo *> *pending_boxes, Box *target);
+    float getX() const;
+    float getY() const;
+    float getWidth() const;
+    SDL_FRect getScreenRect() const;
     static inline int BOX_SPAWN_PROBABILITY = 50;
 };
 

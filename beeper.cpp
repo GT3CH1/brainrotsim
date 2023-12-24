@@ -90,7 +90,7 @@ void Beeper::setWaveType(int waveTypeID)
     //samplingIndex = 0;
 }
 
-void Beeper::setWaveTone(int waveHz)
+void Beeper::setWaveTone(float waveHz)
 {
     waveTone = waveHz;
     //samplingIndex = 0;

@@ -16,6 +16,7 @@ if (MACOSX)
     include_directories(/opt/homebrew/include)
     link_directories(/opt/homebrew/lib)
 endif ()
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 include_directories(/usr/local/include)
 add_executable(physicssim main.cpp box.h
         box.cpp
@@ -29,6 +30,8 @@ add_executable(physicssim main.cpp box.h
         beeper.h
         simrenderer.h
         config.cpp
-        simrenderer.cpp)
+        simrenderer.cpp
+        blendmodes.h
+        LineModes.h)
 #target_link_libraries(physicssim SDL2 SDL2_image box2d SDL2_ttf)
 target_link_libraries(physicssim SDL2 SDL2_image box2d)

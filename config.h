@@ -21,10 +21,10 @@ public:
     static bool smear_line;
     static bool outline;
     static bool wireframe;
-    static int SCREEN_WIDTH;
-    static int SCREEN_HEIGHT;
-    static int SCREEN_CENTER_X;
-    static int SCREEN_CENTER_Y;
+    static float SCREEN_WIDTH;
+    static float SCREEN_HEIGHT;
+    static float SCREEN_CENTER_X;
+    static float SCREEN_CENTER_Y;
     static int MAX_X;
     static int MAX_Y;
     static int MAX_BOXES;
