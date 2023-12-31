@@ -46,19 +46,6 @@ public:
      */
     // static TTF_Font *font;
     /**
-     * \brief The box layer.
-     */
-    inline static int BOX_LAYER = -1;
-    /**
-     * \brief The outline layer.
-     */
-    inline static int OUTLINE_LAYER = -1;
-    /**
-     * \brief The line layer.
-     */
-    inline static int LINE_LAYER = -1;
-
-    /**
      * \brief The list of boxes.
      */
     static std::vector<Box *> boxes;
@@ -89,8 +76,8 @@ public:
      * \brief Resets the world, and the renderer.
      */
     static void reset_simulation();
+
     static void spawnBox();
-    static void handleWireFrameToggle();
     /**
      * \brief Handles keybindings.
      */
@@ -145,10 +132,6 @@ public:
      * \brief The delta time change for box2d (1/60).
      */
     static inline float WORLD_STEP = 0.01666f;
-
-    static inline LineMode::LineMode current_linemode = LineMode::NONE;
-
-    static void handleLineModeToggle();
 
     static std::vector<Wall *> *walls;
 

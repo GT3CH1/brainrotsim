@@ -27,3 +27,9 @@ float Config::SCREEN_HEIGHT = 48;
 float Config::SCREEN_CENTER_X = SCREEN_WIDTH / 2;
 float Config::SCREEN_CENTER_Y = SCREEN_HEIGHT / 2;
 int Config::MAX_BOXES = 60;
+
+
+void Config::handleLineModeToggle() {
+    const auto mode = static_cast<LineMode::LineMode>((current_linemode + 1) % LineMode::NUM_LINE_MODES);
+    current_linemode = mode;
+}

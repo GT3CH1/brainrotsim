@@ -4,6 +4,11 @@
 
 #include "box.h"
 
+
+#include "Layer.h"
+#include "LineModes.h"
+#include "blendmodes.h"
+
 Box::Box(b2World *world) {
     rect = nullptr;
     renderTexture = nullptr;
@@ -113,3 +118,31 @@ float Box::getWindowY() const { return (body->GetPosition().y - rect->h / 2.0f) 
 float Box::getScreenWidth() const { return rect->w * Renderer::WINDOW_SCALE; }
 
 SDL_FRect Box::getScreenRect() const { return {getWindowX(), getWindowY(), getScreenWidth(), getScreenWidth()}; }
+
+void Box::handleWireFrameToggle() {
+    Config::wireframe = !Config::wireframe;
+    Config::outline = Config::wireframe;
+    Config::line_mode = Config::wireframe;
+    Renderer::clearLayer(Layer::OUTLINE);
+    Renderer::clearLayer(Layer::LINE);
+    if (Config::wireframe) {
+        Config::smear_line = true;
+        Config::outline = true;
+        Config::line_mode = true;
+        if (Config::current_linemode == LineMode::NONE)
+            Config::current_linemode = LineMode::CENTER;
+    } else {
+        Config::smear_line = false;
+    }
+    SDL_BlendMode _customBlend;
+    if (Config::wireframe) {
+        _customBlend = wireframe_blend_mode;
+    } else {
+        _customBlend = normal_blend_mode;
+    }
+    Renderer::setBlendMode(Layer::LINE, SDL_BLENDMODE_NONE);
+    Renderer::setBlendMode(Layer::BOX, _customBlend);
+    Renderer::setBlendMode(Layer::OUTLINE, _customBlend);
+}
+
+

@@ -37,7 +37,8 @@ public:
     float getWindowY() const;
     float getScreenWidth() const;
     SDL_FRect getScreenRect() const;
-    std::vector<SDL_FPoint>* collision_locs;
+    static void handleWireFrameToggle();
+    std::vector<SDL_FPoint> *collision_locs;
     static inline int BOX_SPAWN_PROBABILITY = 50;
 };
 

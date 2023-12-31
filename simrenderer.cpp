@@ -2,6 +2,7 @@
 // Created by GT3CH1 on 12/17/23.
 // Copyright (c) 2023 GT3CH1. All rights reserved.
 #include "simrenderer.h"
+#include "Layer.h"
 
 SDL_Renderer *Renderer::renderer = nullptr;
 SDL_Surface *Renderer::render_surface = nullptr;
@@ -36,16 +37,21 @@ void Renderer::init() {
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     setupScreen();
-    _RENDER_MAIN_LAYER = addLayer();
+    addLayer(Layer::MAIN);
 }
 
 int Renderer::addLayer() {
-    auto _texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-                                      Config::SCREEN_WIDTH, Config::SCREEN_HEIGHT);
     num_layers++;
-    layers.insert(std::pair(num_layers, _texture));
+    addLayer(num_layers);
     return num_layers;
 }
+
+void Renderer::addLayer(int layerId) {
+    auto _texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+                                      Config::SCREEN_WIDTH, Config::SCREEN_HEIGHT);
+    layers.insert(std::pair(layerId, _texture));
+}
+
 
 void Renderer::setRenderLayer(const int layerId) {
     const auto _texture = layers.at(layerId);
@@ -106,21 +112,21 @@ void Renderer::copyLayerToRenderer(const int layerId) {
     SDL_RenderCopy(renderer, _texture, nullptr, nullptr);
 }
 void Renderer::copyAllLayersToRenderer() {
-    setRenderLayer(_RENDER_MAIN_LAYER);
+    setRenderLayer(Layer::MAIN);
     for (auto &layer: layers) {
-        if (layer.first == _RENDER_MAIN_LAYER)
+        if (layer.first == Layer::MAIN)
             continue;
         copyLayerToRenderer(layer.first);
     }
     setNullRenderLayer();
 
-    copyLayerToRenderer(_RENDER_MAIN_LAYER);
+    copyLayerToRenderer(Layer::MAIN);
 }
 
 
 void Renderer::present() {
     SDL_RenderPresent(renderer);
-    setRenderLayer(_RENDER_MAIN_LAYER);
+    setRenderLayer(Layer::MAIN);
 }
 
 

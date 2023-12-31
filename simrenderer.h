@@ -24,7 +24,6 @@ public:
     inline static int RENDER_SCALE_X = 100;
     inline static int RENDER_SCALE_Y = 100;
     inline static float WINDOW_SCALE = 10.0f;
-    inline static int _RENDER_MAIN_LAYER = -1;
     inline static SDL_FPoint tl_corner = SDL_FPoint{0, 0};
     inline static SDL_FPoint br_corner;
     inline static SDL_FPoint tr_corner;
@@ -35,6 +34,8 @@ public:
      * \brief Creates a new layer with the given name.
      */
     static int addLayer();
+
+    static void addLayer(int layerId);
 
     /**
      * \brief Changes what layer the renderer is currently drawing to.

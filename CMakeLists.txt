@@ -31,6 +31,7 @@ add_executable(physicssim main.cpp box.h
         config.cpp
         simrenderer.cpp
         blendmodes.h
-        LineModes.h)
+        LineModes.h
+        Layer.h)
 #target_link_libraries(physicssim SDL2 SDL2_image box2d SDL2_ttf)
 target_link_libraries(physicssim SDL2 SDL2_image box2d)

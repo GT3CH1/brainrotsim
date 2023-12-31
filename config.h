@@ -5,9 +5,9 @@
 #ifndef PHYSICSSIM_CONFIG_H
 #define PHYSICSSIM_CONFIG_H
 #include "Color.h"
+#include "LineModes.h"
 
-class Config
-{
+class Config {
 public:
     static bool grow;
     static bool runner;
@@ -33,7 +33,9 @@ public:
     static bool quad_line_mode;
     static bool corner_line_mode;
     static bool render_boxes;
+    static inline LineMode::LineMode current_linemode = LineMode::NONE;
+    static void handleLineModeToggle();
 };
 
 
-#endif //PHYSICSSIM_CONFIG_H
+#endif // PHYSICSSIM_CONFIG_H
