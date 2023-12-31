@@ -60,7 +60,7 @@ void Main::setupWorld() {
 
 void Main::reset_simulation() {
     for (const auto box: boxes) {
-        world->DestroyBody(box->body);
+        world->DestroyBody(box->getBody());
     }
     boxes.clear();
 
@@ -73,7 +73,7 @@ void Main::spawnBox() {
     auto const box = new Box(world);
     boxes.push_back(box);
     if (Config::same_color_mode)
-        box->color = boxes[0]->color;
+        box->setColor(boxes[0]->getColor());
 }
 
 
@@ -149,13 +149,9 @@ void Main::onKeyPress() {
     }
 }
 
-void Main::draw_outline(const Box *box) {
-    auto const _b = box->getScreenRect();
-    Renderer::drawRect(&_b, false);
-}
 
 void Main::drawLineToBox(const Box *box) {
-    const auto center = box->body->GetWorldCenter();
+    const auto center = box->getBody()->GetWorldCenter();
     const auto p1 = SDL_FPoint{center.x * Renderer::WINDOW_SCALE, center.y * Renderer::WINDOW_SCALE};
     const auto p2 = SDL_FPoint{Config::SCREEN_CENTER_X * Renderer::WINDOW_SCALE,
                                Config::SCREEN_CENTER_Y * Renderer::WINDOW_SCALE};
@@ -166,8 +162,8 @@ void Main::addNewBoxes() {
     for (const auto box: *pending_boxes) {
         auto color = Color::fromInt(box->color);
         if (Config::same_color_mode)
-            color = boxes[0]->color;
-        auto _box = new Box(world, box->x, box->y, box->w, box->h, color);
+            color = boxes[0]->getColor();
+        auto _box = new Box(world, box->pos, box->w, box->h, color);
         boxes.push_back(_box);
         if (boxes.size() >= Config::MAX_BOXES) {
             break;
@@ -182,7 +178,7 @@ void Main::render_boxes(bool &box_has_audio) {
         Renderer::clearRenderer();
         Renderer::setDrawColor(WHITE);
         for (const Box *box: boxes) {
-            draw_outline(box);
+            box->drawOutline();
         }
     }
     if (Config::current_linemode != LineMode::NONE) {
@@ -191,7 +187,7 @@ void Main::render_boxes(bool &box_has_audio) {
     Renderer::setRenderLayer(Layer::BOX);
     for (const auto box: boxes) {
         if (Config::render_boxes) {
-            Renderer::setDrawColor(box->color);
+            Renderer::setDrawColor(box->getColor());
             auto _rect = box->getScreenRect();
             Renderer::drawRect(&_rect);
         }
@@ -246,7 +242,7 @@ void Main::handleLineModes() {
         Renderer::clearRenderer();
     }
     for (const auto box: boxes) {
-        Renderer::setDrawColor(box->color);
+        Renderer::setDrawColor(box->getColor());
         const auto box_width = box->getScreenWidth();
         const auto box_x = box->getWindowX();
         const auto box_y = box->getWindowY();
@@ -259,10 +255,8 @@ void Main::handleLineModes() {
         const auto tr = SDL_FPoint{right_x, box_y};
         const auto br = SDL_FPoint{right_x, bottom_y};
         switch (Config::current_linemode) {
-            case LineMode::NONE:
-                break;
             case LineMode::COLLISION: {
-                const auto center = box->body->GetWorldCenter();
+                const auto center = box->getBody()->GetWorldCenter();
                 const auto p1 = SDL_FPoint{center.x * Renderer::WINDOW_SCALE, center.y * Renderer::WINDOW_SCALE};
                 for (auto point: *box->collision_locs) {
                     Renderer::drawLine(&p1, &point);
@@ -288,13 +282,15 @@ void Main::handleLineModes() {
                 break;
             }
             case LineMode::CENTER_CORNER: {
-                const auto center = box->body->GetWorldCenter();
+                const auto center = box->getBody()->GetWorldCenter();
                 const auto p1 = SDL_FPoint{center.x * Renderer::WINDOW_SCALE, center.y * Renderer::WINDOW_SCALE};
                 Renderer::drawLine(&Renderer::tl_corner, &p1);
                 Renderer::drawLine(&Renderer::tr_corner, &p1);
                 Renderer::drawLine(&Renderer::bl_corner, &p1);
                 Renderer::drawLine(&Renderer::br_corner, &p1);
             }
+            default:
+                break;
         }
     }
     Renderer::setRenderLayer(Layer::BOX);

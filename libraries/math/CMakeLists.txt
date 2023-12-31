@@ -1,0 +1,1 @@
+add_library(math Vec2f.cpp Vec2f.h)

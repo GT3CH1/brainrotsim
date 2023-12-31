@@ -17,6 +17,9 @@ if (MACOSX)
     link_directories(/opt/homebrew/lib)
 endif ()
 include_directories(/usr/local/include)
+include_directories(libraries)
+add_subdirectory(libraries)
+
 add_executable(physicssim main.cpp box.h
         box.cpp
         Keyboard.hpp
@@ -32,6 +35,9 @@ add_executable(physicssim main.cpp box.h
         simrenderer.cpp
         blendmodes.h
         LineModes.h
-        Layer.h)
+        Layer.h
+        Entity.cpp
+        Entity.h
+        )
 #target_link_libraries(physicssim SDL2 SDL2_image box2d SDL2_ttf)
-target_link_libraries(physicssim SDL2 SDL2_image box2d)
+target_link_libraries(physicssim SDL2 SDL2_image box2d math)

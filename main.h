@@ -89,13 +89,6 @@ public:
     static void onKeyPress();
 
     /**
-     * \brief Draws a white outline around a rect.
-     * \param rect The rect to draw an outline of.
-     * \param body The box2d body of the rect.
-     */
-    static void draw_outline(const Box *box);
-
-    /**
      * \brief Draws a line from the center of the screen to the center of the given box.
      * \param box The box to draw a line to.
      */
@@ -176,16 +169,18 @@ class ContactListener final : public b2ContactListener {
         SDL_FPoint pt{boxA->getWindowX(), boxA->getWindowY()};
         if (pt.x < 1.5)
             pt.x = 0;
-        else if (boxA->getWindowX() + (boxA->rect->w * 10) > Config::SCREEN_WIDTH - Config::SCREEN_WIDTH * 0.02f) {
+        else if (boxA->getWindowX() + (boxA->getRectSize() * 10) >
+                 Config::SCREEN_WIDTH - Config::SCREEN_WIDTH * 0.02f) {
             pt.x = Config::SCREEN_WIDTH;
         } else
-            pt.x = boxA->body->GetPosition().x * Renderer::WINDOW_SCALE;
+            pt.x = boxA->bodyPos().x * Renderer::WINDOW_SCALE;
         if (pt.y < 1.5)
             pt.y = 0;
-        else if (boxA->getWindowY() + (boxA->rect->w * 10) > Config::SCREEN_HEIGHT - Config::SCREEN_HEIGHT * 0.02f) {
+        else if (boxA->getWindowY() + (boxA->getRectSize() * 10) >
+                 Config::SCREEN_HEIGHT - Config::SCREEN_HEIGHT * 0.02f) {
             pt.y = Config::SCREEN_HEIGHT;
         } else
-            pt.y = boxA->body->GetPosition().y * Renderer::WINDOW_SCALE;
+            pt.y = boxA->bodyPos().y * Renderer::WINDOW_SCALE;
         return pt;
     }
     void PreSolve(b2Contact *contact, const b2Manifold *oldManifold) override {
